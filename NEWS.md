@@ -1,9 +1,9 @@
 # News
 
-This is comet 1.0-dev.
+This is comet 1.0
 See LICENSE for licensing details (GPL v2).
 
-## comet-1.0
+## comet-1.1
 
 Includes changes from charybdis-4.1.3-dev.
 
