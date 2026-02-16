@@ -98,7 +98,7 @@ m_part(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
  * side effects	- remove ONE client given the channel name
  */
 static void
-part_one_client(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, char *name, const char *reason
+part_one_client(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, char *name, const char *reason)
 {
 	struct Channel *chptr;
 	struct membership *msptr;
@@ -125,11 +125,10 @@ part_one_client(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client 
 	 */
 	if(!EmptyString(reason) &&
 		(!MyConnect(source_p) ||
-		  (can_send_part(source_p, chptr, msptr) && do_message_hook(msgbuf_p, source_p, chptr, &reason))
+		 (can_send_part(source_p, chptr, msptr) && do_message_hook(msgbuf_p, source_p, chptr, &reason))
 		)
 	  )
 	{
-
 		sendto_server_tags(client_p, chptr, CAP_TS6, NOCAPS, msgbuf_p->n_tags, msgbuf_p->tags,
 			":%s PART %s :%s", use_id(source_p), chptr->chname, reason);
 		sendto_channel_local_tags(source_p, ALL_MEMBERS, NULL, chptr, msgbuf_p->n_tags, msgbuf_p->tags,
