@@ -41,7 +41,7 @@
 #include "ratelimit.h"
 #include "s_assert.h"
 #include "hook.h"
-#include "batch"
+#include "batch.h"
 
 static const char join_desc[] = "Provides the JOIN and TS6 SJOIN commands to facilitate joining and creating channels";
 
