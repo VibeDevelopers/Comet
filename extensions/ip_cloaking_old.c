@@ -1,4 +1,3 @@
-
 #include "stdinc.h"
 #include "modules.h"
 #include "hook.h"
@@ -69,6 +68,12 @@ distribute_hostchange(struct Client *client_p, char *newhost)
 		ClearDynSpoof(client_p);
 }
 
+/*
+ * ipmask values:
+ *   0 - hostname (non-IP): hash prefix + dotted suffix
+ *   1 - IPv4: hash prefix + dotted suffix (e.g. HASH.network.name)
+ *   2 - IPv6: hash prefix only (e.g. HASH:network.name)
+ */
 static void
 do_host_cloak(const char *inbuf, char *outbuf, int ipmask)
 {
@@ -105,9 +110,28 @@ do_host_cloak(const char *inbuf, char *outbuf, int ipmask)
 			rest = next;
 		rb_strlcat(outbuf, rest, HOSTLEN);
 	}
-	else
+	else if (ipmask == 1)
+	{
+		/* IPv4: show hashed prefix with last octet(s) hidden */
 		snprintf(outbuf, HOSTLEN, "%X%X.%s",
 			hosthash2, hosthash, ServerInfo.network_name);
+	}
+	else
+	{
+		/* IPv6: cloak as HASH:network.name to signal IPv6 origin
+		 * while fully masking the address. The colon distinguishes
+		 * it visually from IPv4/hostname cloaks.
+		 */
+		snprintf(outbuf, HOSTLEN, "%X%X:%s",
+			hosthash2, hosthash, ServerInfo.network_name);
+	}
+}
+
+/* Returns 1 if the string looks like an IPv6 address (contains a colon). */
+static int
+is_ipv6_address(const char *host)
+{
+	return strchr(host, ':') != NULL;
 }
 
 static void
@@ -160,7 +184,14 @@ check_new_user(void *vdata)
 	}
 	source_p->localClient->mangledhost = rb_malloc(HOSTLEN + 1);
 	if (!irccmp(source_p->orighost, source_p->sockhost))
-		do_host_cloak(source_p->orighost, source_p->localClient->mangledhost, 1);
+	{
+		/* The orighost is a raw IP address (no rDNS). Determine
+		 * whether it is IPv6 or IPv4 and cloak accordingly. */
+		if (is_ipv6_address(source_p->orighost))
+			do_host_cloak(source_p->orighost, source_p->localClient->mangledhost, 2);
+		else
+			do_host_cloak(source_p->orighost, source_p->localClient->mangledhost, 1);
+	}
 	else
 		do_host_cloak(source_p->orighost, source_p->localClient->mangledhost, 0);
 	if (IsDynSpoof(source_p))
