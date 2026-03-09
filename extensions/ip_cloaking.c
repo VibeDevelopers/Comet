@@ -28,6 +28,7 @@
 #include <openssl/hmac.h>
 #include <openssl/sha.h>
 #include <openssl/rand.h>
+#include <sys/socket.h>  /* AF_INET, AF_INET6 */
 
 static const char ip_cloaking_desc[] =
 	"Secure IP cloaking using HMAC-SHA256 (user mode +h)";
@@ -61,8 +62,11 @@ _modinit(void)
 static void
 _moddeinit(void)
 {
-	/* Zero the key before unloading */
-	memset(cloak_key, 0, CLOAK_KEY_LEN);
+	/* Zero the key before unloading.
+	 * OPENSSL_cleanse is used instead of memset because compilers are
+	 * permitted to optimise away a memset of memory that is never read
+	 * again, which would leave the key in memory. */
+	OPENSSL_cleanse(cloak_key, CLOAK_KEY_LEN);
 	user_modes['h'] = 0;
 	construct_umodebuf();
 }
@@ -78,23 +82,34 @@ hmac_sha256_hex(const char *input, char *outbuf, size_t outlen)
 {
 	unsigned char digest[SHA256_DIGEST_LENGTH];
 	unsigned int digest_len = SHA256_DIGEST_LENGTH;
-	char hexdigest[SHA256_DIGEST_LENGTH * 2 + 1];
+	static const char hex[] = "0123456789abcdef";
 	size_t i;
 
-	HMAC(EVP_sha256(),
-	     cloak_key, CLOAK_KEY_LEN,
-	     (const unsigned char *)input, strlen(input),
-	     digest, &digest_len);
+	/* HMAC() returns NULL on failure; treat that as an all-zero digest
+	 * rather than operating on uninitialised stack memory. */
+	if (HMAC(EVP_sha256(),
+	         cloak_key, CLOAK_KEY_LEN,
+	         (const unsigned char *)input, strlen(input),
+	         digest, &digest_len) == NULL)
+	{
+		memset(digest, 0, SHA256_DIGEST_LENGTH);
+	}
 
-	for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
-		snprintf(hexdigest + i * 2, 3, "%02x", digest[i]);
-
-	/* Truncate to requested length */
+	/* Clamp outlen to the maximum available hex output */
 	if (outlen > SHA256_DIGEST_LENGTH * 2)
 		outlen = SHA256_DIGEST_LENGTH * 2;
 
-	memcpy(outbuf, hexdigest, outlen);
+	/* Write hex directly into outbuf; avoids an intermediate buffer and
+	 * the overhead of repeated snprintf calls inside the loop. */
+	for (i = 0; i < outlen / 2; i++)
+	{
+		outbuf[i * 2]     = hex[(digest[i] >> 4) & 0xf];
+		outbuf[i * 2 + 1] = hex[digest[i] & 0xf];
+	}
 	outbuf[outlen] = '\0';
+
+	/* Wipe digest off the stack */
+	OPENSSL_cleanse(digest, SHA256_DIGEST_LENGTH);
 }
 
 /* -------------------------------------------------------------------------
@@ -183,11 +198,12 @@ do_host_cloak_host(const char *inbuf, char *outbuf)
 static void
 do_host_cloak(const char *inbuf, char *outbuf)
 {
-	if (strchr(inbuf, ':'))
+	struct in6_addr addr6;
+	struct in_addr  addr4;
+
+	if (rb_inet_pton(AF_INET6, inbuf, &addr6) == 1)
 		do_host_cloak_ipv6(inbuf, outbuf);
-	else if (strchr(inbuf, '.') &&
-	         /* Heuristic: all-numeric labels => IPv4 */
-	         strspn(inbuf, "0123456789.") == strlen(inbuf))
+	else if (rb_inet_pton(AF_INET, inbuf, &addr4) == 1)
 		do_host_cloak_ipv4(inbuf, outbuf);
 	else
 		do_host_cloak_host(inbuf, outbuf);
@@ -283,6 +299,12 @@ check_new_user(void *vdata)
 	}
 
 	source_p->localClient->mangledhost = rb_malloc(HOSTLEN + 1);
+	if (source_p->localClient->mangledhost == NULL)
+	{
+		/* Out of memory: disable cloaking for this user rather than crash */
+		source_p->umodes &= ~user_modes['h'];
+		return;
+	}
 
 	do_host_cloak(source_p->orighost, source_p->localClient->mangledhost);
 
