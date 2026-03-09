@@ -233,30 +233,22 @@ find_channel_status(struct membership *msptr, int combine)
  *
  * input	- channel to add client to, client to add, channel flags
  * output	-
- * side effects - user is added to channel; if this is the first local client
- *                joining a newly created channel and autotopic is configured,
- *                the autotopic is set with topic_time == channelts to prevent
- *                TS desyncs across servers during burst/rejoin.
+ * side effects - user is added to channel; if a local client is the first
+ *                member of a channel that has no topic, the autotopic is set.
+ *                topic_time is pinned to channelts so all servers that create
+ *                the same channel independently agree on the same value, and
+ *                any real topic received during burst (which will carry an
+ *                older or equal channelts) correctly overwrites it.
  */
 void
 add_user_to_channel(struct Channel *chptr, struct Client *client_p, int flags)
 {
 	struct membership *msptr;
 	rb_dlink_node *p;
-	int is_new_channel;
 
 	s_assert(client_p->user != NULL);
 	if(client_p->user == NULL)
 		return;
-
-	/* Snapshot emptiness *before* adding the new member so we can detect
-	 * a channel being created.  Only trigger autotopic for local clients:
-	 * remote servers will burst the topic back to us themselves, and we
-	 * must not set it on their behalf or we risk diverging topic_time
-	 * values.  Using chptr->channelts (not rb_current_time()) for the
-	 * topic timestamp guarantees every server that independently creates
-	 * the same channel assigns the same topic_time, eliminating desyncs. */
-	is_new_channel = (rb_dlink_list_length(&chptr->members) == 0);
 
 	msptr = rb_bh_alloc(member_heap);
 
@@ -280,13 +272,17 @@ add_user_to_channel(struct Channel *chptr, struct Client *client_p, int flags)
 	if(MyClient(client_p))
 		rb_dlinkAdd(msptr, &msptr->locchannode, &chptr->locmembers);
 
-	/* Set autotopic only when a local client creates a brand-new channel.
-	 * Topic time is pinned to channelts so it is identical on every server
-	 * that happens to create the same channel at the same moment, and will
-	 * be correctly overwritten during TS-based topic resolution on burst. */
-	if(is_new_channel && MyClient(client_p) && !EmptyString(ConfigChannel.autotopic))
+	/* Set autotopic only when a local client is the first member and the
+	 * channel has no topic yet.  Checking chptr->topic == NULL rather than
+	 * member count means we never fire during burst (the remote server will
+	 * send us the real topic), and we never overwrite a topic that already
+	 * exists.  topic_time == channelts ensures the value is deterministic
+	 * and identical on every server that creates the same channel, so a
+	 * subsequent burst topic with an equal or older TS wins cleanly. */
+	if(MyClient(client_p) && chptr->topic == NULL && !EmptyString(ConfigChannel.autotopic))
 		set_channel_topic(chptr, ConfigChannel.autotopic, me.name, chptr->channelts);
 }
+
 
 /* remove_user_from_channel()
  *
@@ -1388,4 +1384,4 @@ resv_chan_forcepart(const char *name, const char *reason, int temp_time)
 		}
 	}
 }
-#
+
