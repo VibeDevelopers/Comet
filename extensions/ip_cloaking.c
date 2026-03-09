@@ -31,7 +31,7 @@
 #include <sys/socket.h>  /* AF_INET, AF_INET6 */
 
 static const char ip_cloaking_desc[] =
-	"Secure IP cloaking using HMAC-SHA256 (user mode +h)";
+	"Secure IP cloaking using HMAC-SHA256 (user mode +x)";
 
 /* 256-bit secret key, generated once per module load from /dev/urandom */
 #define CLOAK_KEY_LEN 32
