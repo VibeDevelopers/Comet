@@ -843,9 +843,6 @@ set_default_conf(void)
 	ConfigFileEntry.hide_opers_in_whois = 0;
 	ConfigFileEntry.hide_opers = 0;
 
-	rb_free(ConfigChannel.autotopic);
-	ConfigChannel.autotopic = NULL;
-
 	if (!alias_dict)
 		alias_dict = rb_dictionary_create("alias", rb_strcasecmp);
 }
@@ -1594,6 +1591,8 @@ clear_out_old_conf(void)
 	ConfigFileEntry.fname_operspylog = NULL;
 	rb_free(ConfigFileEntry.fname_ioerrorlog);
 	ConfigFileEntry.fname_ioerrorlog = NULL;
+	rb_free(ConfigChannel.autotopic);
+	ConfigChannel.autotopic = NULL;
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, service_list.head)
 	{
