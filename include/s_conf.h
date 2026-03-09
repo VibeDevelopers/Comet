@@ -299,6 +299,7 @@ struct config_channel_entry
 	int cycle_host_change;
 	int ip_bans_through_vhost;
 	int invite_notify_notice;
+	char *autotopic;		/* Default topic set on newly created channels */
 };
 
 struct config_server_hide
