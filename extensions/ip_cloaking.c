@@ -209,9 +209,15 @@ do_host_cloak(const char *inbuf, char *outbuf)
 	struct in_addr  addr4;
 
 	if (rb_inet_pton(AF_INET6, inbuf, &addr6) == 1)
+	{
+		OPENSSL_cleanse(&addr6, sizeof(addr6));
 		do_host_cloak_ipv6(inbuf, outbuf);
+	}
 	else if (rb_inet_pton(AF_INET, inbuf, &addr4) == 1)
+	{
+		OPENSSL_cleanse(&addr4, sizeof(addr4));
 		do_host_cloak_ipv4(inbuf, outbuf);
+	}
 	else
 		do_host_cloak_host(inbuf, outbuf);
 }
@@ -222,10 +228,12 @@ do_host_cloak(const char *inbuf, char *outbuf)
 
 static void check_umode_change(void *data);
 static void check_new_user(void *data);
+static void free_new_user(void *data);
 
 mapi_hfn_list_av1 ip_cloaking_hfnlist[] = {
-	{ "umode_changed",  check_umode_change },
-	{ "new_local_user", check_new_user     },
+	{ "umode_changed",   check_umode_change },
+	{ "new_local_user",  check_new_user     },
+	{ "exit_client",     free_new_user      },
 	{ NULL, NULL }
 };
 
@@ -295,6 +303,22 @@ check_umode_change(void *vdata)
 }
 
 static void
+free_new_user(void *vdata)
+{
+	struct Client *source_p = (void *)vdata;
+
+	/* Free the cloaked host buffer allocated in check_new_user.
+	 * This hook fires when a local client exits, preventing a per-user
+	 * HOSTLEN+1 byte leak for every user who connects and disconnects. */
+	if (source_p->localClient != NULL &&
+	    source_p->localClient->mangledhost != NULL)
+	{
+		rb_free(source_p->localClient->mangledhost);
+		source_p->localClient->mangledhost = NULL;
+	}
+}
+
+static void
 check_new_user(void *vdata)
 {
 	struct Client *source_p = (void *)vdata;
@@ -303,6 +327,14 @@ check_new_user(void *vdata)
 	{
 		source_p->umodes &= ~user_modes['x'];
 		return;
+	}
+
+	/* Free any previously allocated buffer (e.g. module reload with live
+	 * users connected) before allocating a fresh one. */
+	if (source_p->localClient->mangledhost != NULL)
+	{
+		rb_free(source_p->localClient->mangledhost);
+		source_p->localClient->mangledhost = NULL;
 	}
 
 	source_p->localClient->mangledhost = rb_malloc(HOSTLEN + 1);
