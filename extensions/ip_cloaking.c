@@ -54,7 +54,7 @@ _modinit(void)
 		return -1;
 	}
 
-	user_modes['h'] = find_umode_slot();
+	user_modes['x'] = find_umode_slot();
 	construct_umodebuf();
 	return 0;
 }
@@ -67,7 +67,7 @@ _moddeinit(void)
 	 * permitted to optimise away a memset of memory that is never read
 	 * again, which would leave the key in memory. */
 	OPENSSL_cleanse(cloak_key, CLOAK_KEY_LEN);
-	user_modes['h'] = 0;
+	user_modes['x'] = 0;
 	construct_umodebuf();
 }
 
@@ -180,8 +180,15 @@ do_host_cloak_host(const char *inbuf, char *outbuf)
 				seen++;
 				if (seen == target)
 				{
-					/* p now points at the dot before "example.com" */
-					snprintf(outbuf, HOSTLEN + 1, "%s%s", token, p);
+					/* p now points at the dot before "example.com".
+					 * Use strlcpy+strlcat so the bound is statically visible
+					 * to the compiler, silencing -Wformat-truncation.
+					 * If the combined length would exceed HOSTLEN, fall through
+					 * to the full-hash fallback rather than truncating. */
+					if (strlen(token) + strlen(p) > HOSTLEN)
+						break;
+					rb_strlcpy(outbuf, token, HOSTLEN + 1);
+					rb_strlcat(outbuf, p,     HOSTLEN + 1);
 					return;
 				}
 			}
@@ -260,17 +267,17 @@ check_umode_change(void *vdata)
 	if (!MyClient(source_p))
 		return;
 
-	if (!((data->oldumodes ^ source_p->umodes) & user_modes['h']))
+	if (!((data->oldumodes ^ source_p->umodes) & user_modes['x']))
 		return;
 
-	if (source_p->umodes & user_modes['h'])
+	if (source_p->umodes & user_modes['x'])
 	{
 		if (IsIPSpoof(source_p) ||
 		    source_p->localClient->mangledhost == NULL ||
 		    (IsDynSpoof(source_p) &&
 		     strcmp(source_p->host, source_p->localClient->mangledhost)))
 		{
-			source_p->umodes &= ~user_modes['h'];
+			source_p->umodes &= ~user_modes['x'];
 			return;
 		}
 		if (strcmp(source_p->host, source_p->localClient->mangledhost))
@@ -294,7 +301,7 @@ check_new_user(void *vdata)
 
 	if (IsIPSpoof(source_p))
 	{
-		source_p->umodes &= ~user_modes['h'];
+		source_p->umodes &= ~user_modes['x'];
 		return;
 	}
 
@@ -302,16 +309,16 @@ check_new_user(void *vdata)
 	if (source_p->localClient->mangledhost == NULL)
 	{
 		/* Out of memory: disable cloaking for this user rather than crash */
-		source_p->umodes &= ~user_modes['h'];
+		source_p->umodes &= ~user_modes['x'];
 		return;
 	}
 
 	do_host_cloak(source_p->orighost, source_p->localClient->mangledhost);
 
 	if (IsDynSpoof(source_p))
-		source_p->umodes &= ~user_modes['h'];
+		source_p->umodes &= ~user_modes['x'];
 
-	if (source_p->umodes & user_modes['h'])
+	if (source_p->umodes & user_modes['x'])
 	{
 		rb_strlcpy(source_p->host, source_p->localClient->mangledhost,
 			sizeof(source_p->host));
