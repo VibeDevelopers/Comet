@@ -580,14 +580,23 @@ quarantine_reset_conf(void *unused)
 static void
 quarantine_set_allow_channels(void *data)
 {
-	size_t n = 0;
-	for (conf_parm_t *arg = data; arg; arg = arg->next)
-		n++;
+    size_t n = 0;
 
-	allowed_channels = rb_malloc((n + 1) * sizeof(char *));
+    if (allowed_channels != NULL)
+    {
+        for (int i = 0; allowed_channels[i] != NULL; i++)
+            rb_free(allowed_channels[i]);
+        rb_free(allowed_channels);
+    }
 
-	n = 0;
-	for (conf_parm_t *arg = data; arg; arg = arg->next)
-		allowed_channels[n++] = rb_strdup(arg->v.string);
-	allowed_channels[n] = NULL;
+    for (conf_parm_t *arg = data; arg; arg = arg->next)
+        n++;
+
+    allowed_channels = rb_malloc((n + 1) * sizeof(char *));
+
+    n = 0;
+    for (conf_parm_t *arg = data; arg; arg = arg->next)
+        allowed_channels[n++] = rb_strdup(arg->v.string);
+
+    allowed_channels[n] = NULL;
 }
