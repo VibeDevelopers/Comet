@@ -537,28 +537,44 @@ quarantine_privmsg_user(void *data_)
 static void
 quarantine_reset_conf(void *unused)
 {
-	if (allowed_channels != NULL)
-	{
-		for (int i = 0; allowed_channels[i] != NULL; i++)
-			rb_free(allowed_channels[i]);
-		rb_free(allowed_channels);
-		allowed_channels = NULL;
-	}
+    if (allowed_channels != NULL)
+    {
+        for (int i = 0; allowed_channels[i] != NULL; i++)
+            rb_free(allowed_channels[i]);
 
-	if (apply_msg != NULL)
-		rb_free(apply_msg);
+        rb_free(allowed_channels);
+        allowed_channels = NULL;
+    }
 
-	if (join_reason != NULL)
-		rb_free(join_reason);
+    if (apply_msg != NULL)
+    {
+        rb_free(apply_msg);
+        apply_msg = NULL;
+    }
 
-	if (msg_reason != NULL)
-		rb_free(msg_reason);
+    if (join_reason != NULL)
+    {
+        rb_free(join_reason);
+        join_reason = NULL;
+    }
 
-	if (other_msg_reason != NULL)
-		rb_free(other_msg_reason);
+    if (msg_reason != NULL)
+    {
+        rb_free(msg_reason);
+        msg_reason = NULL;
+    }
 
-	if (remove_msg != NULL)
-		rb_free(remove_msg);
+    if (other_msg_reason != NULL)
+    {
+        rb_free(other_msg_reason);
+        other_msg_reason = NULL;
+    }
+
+    if (remove_msg != NULL)
+    {
+        rb_free(remove_msg);
+        remove_msg = NULL;
+    }
 }
 
 static void
