@@ -3,6 +3,20 @@
 This is comet 1.0
 See LICENSE for licensing details (GPL v2).
 
+## comet-1.2
+
+Includes changes from Solanum
+
+### security
+- **Cloaking:** replaced FNV with HMAC-SHA256, full-address cloaking for both IPv4/IPv6/hostnames, random secret key. -- 2024 
+
+### misc
+- **Auotopic:** - default topic for freshly joined channels set via ircd.conf
+
+### oper/server
+- **Quarantine:** quarantined user will not be able to join channels or send messages to channels, with exception of explicitly allowlisted channels in ircd.conf. They will also not be able to send private messages to other users except opers or services.
+
+
 ## comet-1.1
 
 Includes changes from charybdis-4.1.3-dev.
