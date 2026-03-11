@@ -89,6 +89,7 @@ unsigned int CAP_BAN;
 unsigned int CAP_MLOCK;
 unsigned int CAP_EBMASK;
 unsigned int CAP_STAG;
+unsigned int CAP_HOPS;
 
 unsigned int CLICAP_MULTI_PREFIX;
 unsigned int CLICAP_ACCOUNT_NOTIFY;
@@ -134,6 +135,7 @@ init_builtin_capabs(void)
 	CAP_MLOCK = capability_put(serv_capindex, "MLOCK", NULL);
 	CAP_EBMASK = capability_put(serv_capindex, "EBMASK", NULL);
 	CAP_STAG = capability_put(serv_capindex, "STAG", NULL);
+	CAP_HOPS = capability_put(serv_capindex, "HOPS", NULL);
 
 	capability_require(serv_capindex, "QS");
 	capability_require(serv_capindex, "EX");
@@ -667,6 +669,8 @@ burst_TS6(struct Client *client_p)
 
 			tlen = strlen(use_id(msptr->client_p)) + 1;
 			if(is_chanop(msptr))
+				tlen++;
+			else if(is_halfop(msptr))
 				tlen++;
 			if(is_voiced(msptr))
 				tlen++;

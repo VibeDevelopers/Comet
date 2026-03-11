@@ -210,7 +210,7 @@ find_channel_membership(struct Channel *chptr, struct Client *client_p)
 const char *
 find_channel_status(struct membership *msptr, int combine)
 {
-	static char buffer[3];
+	static char buffer[4];
 	char *p;
 
 	p = buffer;
@@ -220,6 +220,12 @@ find_channel_status(struct membership *msptr, int combine)
 		if(!combine)
 			return "@";
 		*p++ = '@';
+	}
+	else if(is_halfop(msptr))
+	{
+		if(!combine)
+			return "%";
+		*p++ = '%';
 	}
 
 	if(is_voiced(msptr))
@@ -871,7 +877,7 @@ can_send(struct Channel *chptr, struct Client *source_p, struct membership *mspt
 			moduledata.approved = CAN_SEND_NO;
 	}
 
-	if(is_chanop_voiced(msptr))
+	if(is_chanop_voiced(msptr) || is_halfop(msptr))
 		moduledata.approved = CAN_SEND_OPV;
 
 	moduledata.client = source_p;

@@ -89,6 +89,7 @@ extern unsigned int CAP_ENCAP;			/* supports ENCAP */
 extern unsigned int CAP_TS6;			/* supports TS6 or above */
 extern unsigned int CAP_SERVICE;		/* supports services */
 extern unsigned int CAP_RSFNC;			/* rserv FNC */
+extern unsigned int CAP_RSFNCF;			/* rserv FNC (forced) */
 extern unsigned int CAP_SAVE;			/* supports SAVE (nick collision FNC) */
 extern unsigned int CAP_EUID;			/* supports EUID (ext UID + nonencap CHGHOST) */
 extern unsigned int CAP_EOPMOD;			/* supports EOPMOD (ext +z + ext topic) */
@@ -96,6 +97,7 @@ extern unsigned int CAP_BAN;			/* supports propagated bans */
 extern unsigned int CAP_MLOCK;			/* supports MLOCK messages */
 extern unsigned int CAP_EBMASK;			/* supports sending BMASK set by/at metadata */
 extern unsigned int CAP_STAG;			/* supports s2s tags and TAGMSG */
+extern unsigned int CAP_HOPS;			/* supports halfops (+h -- %<nick>) */
 
 /* XXX: added for backwards compatibility. --nenolod */
 #define CAP_MASK	(capability_index_mask(serv_capindex) & ~(CAP_TS6 | CAP_CAP))

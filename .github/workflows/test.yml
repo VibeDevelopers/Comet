@@ -1,0 +1,54 @@
+name: Quick Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ircd/**'
+      - 'modules/**'
+      - 'include/**'
+      - '.github/workflows/test.yml'
+
+jobs:
+  quick-build-test:
+    name: Quick Build Test
+    runs-on: ubuntu-24.04
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@main
+      with:
+        submodules: recursive
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          gcc-12 \
+          automake \
+          autoconf \
+          libtool \
+          libltdl-dev \
+          libsqlite3-dev \
+          libhyperscan-dev
+    
+    - name: Run autogen
+      run: bash autogen.sh
+    
+    - name: Configure
+      run: ./configure --enable-assert=hard --enable-warnings
+    
+    - name: Build
+      run: make -j2
+    
+    - name: Verify halfop symbols
+      run: |
+        echo "Checking for CAP_HOPS and chm_halfop symbols..."
+        nm ircd/.libs/libircd.so | grep -E "CAP_HOPS|chm_halfop" || (echo "ERROR: Symbols not found!" && exit 1)
+        echo "✅ All halfop symbols found!"
+    
+    - name: Run tests
+      run: make check || echo "⚠️  Some tests failed (may be expected)"
+

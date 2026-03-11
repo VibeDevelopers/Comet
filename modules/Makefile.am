@@ -79,6 +79,7 @@ auto_load_mod_LTLIBRARIES = \
   m_whois.la \
   m_whowas.la \
   m_xline.la \
+  m_irccloud.la \
   sno_routing.la
 
 module_LTLIBRARIES = \

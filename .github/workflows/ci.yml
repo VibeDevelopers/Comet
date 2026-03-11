@@ -22,6 +22,17 @@ on:
       - 'LICENSE'
       - 'NEWS.md'
       - 'README.md'
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of test to run'
+        required: false
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - build-only
+          - quick
 
 jobs:
   linux:

@@ -585,6 +585,56 @@ msg_channel(enum message_type msgtype,
 		fmt = "%s %s";
 	}
 
+	/* Handle !halfop command */
+	if(msgtype == MESSAGE_TYPE_PRIVMSG && text != NULL && 
+	   (!irccmp(text, "!halfop") || 
+	    (strlen(text) > 7 && !ircncmp(text, "!halfop", 7) && (text[7] == ' ' || text[7] == '\0'))))
+	{
+		struct membership *msptr;
+		struct Client *target_p;
+		const char *target_nick;
+		const char *mode_parv[2];
+
+		/* Check if user is a channel operator */
+		msptr = find_channel_membership(chptr, source_p);
+		if(msptr != NULL && is_chanop(msptr))
+		{
+			/* Parse target user */
+			if(strlen(text) > 7 && text[7] == ' ')
+			{
+				target_nick = text + 8;
+				/* Skip whitespace */
+				while(*target_nick == ' ')
+					target_nick++;
+				if(*target_nick == '\0')
+					target_nick = NULL;
+			}
+			else
+			{
+				target_nick = NULL;
+			}
+
+			/* If no target specified, use sender */
+			if(target_nick == NULL || *target_nick == '\0')
+				target_p = source_p;
+			else
+				target_p = find_named_person(target_nick);
+
+			if(target_p != NULL)
+			{
+				/* Set halfop mode */
+				mode_parv[0] = "+h";
+				mode_parv[1] = target_p->name;
+				
+				/* Call set_channel_mode to set halfop */
+				set_channel_mode(client_p, source_p, chptr, msptr, 2, mode_parv);
+				
+				/* Don't send the command message to the channel */
+				return;
+			}
+		}
+	}
+
 	if(MyClient(source_p))
 	{
 		/* idle time shouldn't be reset by notices or tagmsg */
