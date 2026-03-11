@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+      - halfop
     paths-ignore:
       - '.github/workflows/docs.yaml'
       - 'doc/oper-guide/**'
