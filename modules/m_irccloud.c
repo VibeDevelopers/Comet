@@ -72,17 +72,6 @@ sanitise_ident(char *dst, size_t dstlen, const char *src)
     return (i > 0);
 }
 
-/*
- * is_irccloud_auth - returns 1 if the auth block name looks like an IRCCloud
- * domain.  This prevents the module from touching clients matched to
- * unrelated auth blocks whose name happens to be set to something else
- * (e.g. "NOMATCH" in the test harness).
- */
-static int
-is_irccloud_auth(const char *name)
-{
-    return (strstr(name, "irccloud") != NULL);
-}
 
 /*
  * apply_cloak - fired by h_new_local_user.
@@ -110,8 +99,15 @@ apply_cloak(void *data)
     if (!aconf || EmptyString(aconf->info.name))
         return;
 
-    /* Only process IRCCloud auth blocks. */
-    if (!is_irccloud_auth(aconf->info.name))
+    /* NOMATCH is the ircd sentinel meaning no real auth block matched this
+     * user — they fell through to the default catch-all.  Do not cloak. */
+    if (strcasecmp(aconf->info.name, "NOMATCH") == 0)
+        return;
+
+    /* Only cloak IRCCloud users, identified by their numeric UID/SID ident.
+     * Regular users will not have a uid* or sid* ident so are left alone. */
+    if (strncasecmp(source_p->username, "uid", 3) != 0 &&
+        strncasecmp(source_p->username, "sid", 3) != 0)
         return;
 
     /* D-line check before touching the client's host or sending anything. */
@@ -196,12 +192,13 @@ send_notice(void *data)
     if (!MyClient(source_p) || !source_p->localClient)
         return;
 
-    /* Only notify for IRCCloud auth blocks. */
+    /* Only notify for IRCCloud users. */
     struct ConfItem *aconf = source_p->localClient->att_conf;
     if (!aconf || EmptyString(aconf->info.name))
         return;
 
-    if (!is_irccloud_auth(aconf->info.name))
+    if (strncasecmp(source_p->username, "uid", 3) != 0 &&
+        strncasecmp(source_p->username, "sid", 3) != 0)
         return;
 
     sendto_one(source_p, "NOTICE * :IRCCloud cloak set to %s", source_p->host);
