@@ -22,8 +22,7 @@ static const char ip_cloaking_desc[] =
     "IP cloaking module that uses user mode +x (SHA-256 variant)";
 
 /* --------------------------------------------------------------------------
- * Portable SHA-256 — no external dependency required.
- * Based on the public-domain implementation by Brad Conte.
+ * Portable SHA-256
  * -------------------------------------------------------------------------- */
 
 #define SHA256_BLOCK_SIZE 32
@@ -65,11 +64,12 @@ static const uint32_t sha256_k[64] = {
 static void
 sha256_transform(SHA256_CTX *ctx, const uint8_t data[])
 {
-    uint32_t a, b, c, d, e, f, g, h, i, j, t1, t2, m[64];
+    uint32_t a, b, c, d, e, f, g, h, i, t1, t2, m[64];
+    uint32_t j;
 
     for (i = 0, j = 0; i < 16; i++, j += 4)
-        m[i] = ((uint32_t)data[j] << 24) | ((uint32_t)data[j+1] << 16)
-             | ((uint32_t)data[j+2] << 8) | (uint32_t)data[j+3];
+        m[i] = ((uint32_t)data[j]   << 24) | ((uint32_t)data[j+1] << 16)
+             | ((uint32_t)data[j+2] <<  8) |  (uint32_t)data[j+3];
     for (; i < 64; i++)
         m[i] = SIG1(m[i-2]) + m[i-7] + SIG0(m[i-15]) + m[i-16];
 
@@ -94,8 +94,8 @@ sha256_transform(SHA256_CTX *ctx, const uint8_t data[])
 static void
 sha256_init(SHA256_CTX *ctx)
 {
-    ctx->datalen = 0;
-    ctx->bitlen  = 0;
+    ctx->datalen  = 0;
+    ctx->bitlen   = 0;
     ctx->state[0] = 0x6a09e667;
     ctx->state[1] = 0xbb67ae85;
     ctx->state[2] = 0x3c6ef372;
@@ -113,8 +113,8 @@ sha256_update(SHA256_CTX *ctx, const uint8_t *data, size_t len)
         ctx->data[ctx->datalen++] = data[i];
         if (ctx->datalen == 64) {
             sha256_transform(ctx, ctx->data);
-            ctx->bitlen += 512;
-            ctx->datalen = 0;
+            ctx->bitlen  += 512;
+            ctx->datalen  = 0;
         }
     }
 }
@@ -135,7 +135,7 @@ sha256_final(SHA256_CTX *ctx, uint8_t hash[SHA256_BLOCK_SIZE])
 
     ctx->bitlen += (uint64_t)ctx->datalen * 8;
     ctx->data[63] = (uint8_t)(ctx->bitlen);
-    ctx->data[62] = (uint8_t)(ctx->bitlen >> 8);
+    ctx->data[62] = (uint8_t)(ctx->bitlen >>  8);
     ctx->data[61] = (uint8_t)(ctx->bitlen >> 16);
     ctx->data[60] = (uint8_t)(ctx->bitlen >> 24);
     ctx->data[59] = (uint8_t)(ctx->bitlen >> 32);
@@ -145,25 +145,17 @@ sha256_final(SHA256_CTX *ctx, uint8_t hash[SHA256_BLOCK_SIZE])
     sha256_transform(ctx, ctx->data);
 
     for (i = 0; i < 4; i++) {
-        hash[i]      = (ctx->state[0] >> (24 - i*8)) & 0xff;
-        hash[i+4]    = (ctx->state[1] >> (24 - i*8)) & 0xff;
-        hash[i+8]    = (ctx->state[2] >> (24 - i*8)) & 0xff;
-        hash[i+12]   = (ctx->state[3] >> (24 - i*8)) & 0xff;
-        hash[i+16]   = (ctx->state[4] >> (24 - i*8)) & 0xff;
-        hash[i+20]   = (ctx->state[5] >> (24 - i*8)) & 0xff;
-        hash[i+24]   = (ctx->state[6] >> (24 - i*8)) & 0xff;
-        hash[i+28]   = (ctx->state[7] >> (24 - i*8)) & 0xff;
+        hash[i]    = (ctx->state[0] >> (24 - i*8)) & 0xff;
+        hash[i+4]  = (ctx->state[1] >> (24 - i*8)) & 0xff;
+        hash[i+8]  = (ctx->state[2] >> (24 - i*8)) & 0xff;
+        hash[i+12] = (ctx->state[3] >> (24 - i*8)) & 0xff;
+        hash[i+16] = (ctx->state[4] >> (24 - i*8)) & 0xff;
+        hash[i+20] = (ctx->state[5] >> (24 - i*8)) & 0xff;
+        hash[i+24] = (ctx->state[6] >> (24 - i*8)) & 0xff;
+        hash[i+28] = (ctx->state[7] >> (24 - i*8)) & 0xff;
     }
 }
 
-/*
- * Compute SHA-256(domain_tag || ":" || input) into `digest`.
- *
- * We use me.name as a stable, server-specific domain tag so that
- * the same IP on two different servers produces different cloaks,
- * even without an explicit shared secret.  This is still keyless in
- * the sense that no operator configuration is required.
- */
 static void
 cloak_hash(const char *input, uint8_t digest[SHA256_BLOCK_SIZE])
 {
@@ -171,7 +163,6 @@ cloak_hash(const char *input, uint8_t digest[SHA256_BLOCK_SIZE])
     const char sep = ':';
 
     sha256_init(&ctx);
-    /* domain separation: server name + literal colon */
     sha256_update(&ctx, (const uint8_t *)me.name, strlen(me.name));
     sha256_update(&ctx, (const uint8_t *)&sep, 1);
     sha256_update(&ctx, (const uint8_t *)input, strlen(input));
@@ -199,10 +190,12 @@ _moddeinit(void)
 
 static void check_umode_change(void *data);
 static void check_new_user(void *data);
+static void free_mangledhost(void *data);          /* new handler */
 
 mapi_hfn_list_av1 ip_cloaking_hfnlist[] = {
     { "umode_changed",   check_umode_change },
     { "new_local_user",  check_new_user     },
+    { "client_exit",     free_mangledhost   },     /* hook client exit */
     { NULL, NULL }
 };
 
@@ -213,23 +206,11 @@ DECLARE_MODULE_AV2(ip_cloaking, _modinit, _moddeinit, NULL, NULL,
  * Cloaking
  * -------------------------------------------------------------------------- */
 
-/*
- * do_host_cloak_ip: cloak the latter half of an IP address.
- *
- * The visible prefix is kept so that network-level bans on a /24 or
- * /48 still work.  The hidden suffix is replaced character-by-character
- * using bytes drawn from SHA-256(server:address), so each position gets
- * independent entropy rather than a rotated accumulator.
- *
- * Alphabet for substitution: 'g'-'z' plus '2'-'7' (32 symbols).
- * This is visually distinct from both plain IPv4 octets (all digits) and
- * plain IPv6 groups (hex), making cloaked addresses unambiguous.
- */
 static void
 do_host_cloak_ip(const char *inbuf, char *outbuf)
 {
-    static const char chartable[] = "ghijklmnopqrstuvwxyz234567";
-    static const size_t CHARTABLE_LEN = sizeof(chartable) - 1; /* 26 */
+    static const char chartable[]     = "ghijklmnopqrstuvwxyz234567";
+    static const size_t CHARTABLE_LEN = sizeof(chartable) - 1;
 
     uint8_t digest[SHA256_BLOCK_SIZE];
     char   *tptr;
@@ -246,13 +227,9 @@ do_host_cloak_ip(const char *inbuf, char *outbuf)
             if (*tptr == ':')
                 totalcount++;
     } else if (!strchr(outbuf, '.')) {
-        return; /* neither IPv4 nor IPv6 — leave untouched */
+        return;
     }
 
-    /*
-     * Hash the *full* address so that the visible prefix doesn't
-     * trivially reveal which cloaked suffix belongs to which /24.
-     */
     cloak_hash(inbuf, digest);
 
     for (tptr = outbuf; *tptr != '\0'; tptr++) {
@@ -261,15 +238,9 @@ do_host_cloak_ip(const char *inbuf, char *outbuf)
             continue;
         }
 
-        /* Skip the visible prefix octets/groups */
         if (ipv6  && sepcount < totalcount / 2) continue;
         if (!ipv6 && sepcount < 2)              continue;
 
-        /*
-         * Consume one digest byte per character.  When we exhaust the
-         * 32-byte digest, re-hash it (digest extension) so we never
-         * repeat the same byte sequence for long addresses.
-         */
         if (digest_pos >= SHA256_BLOCK_SIZE) {
             cloak_hash((const char *)digest, digest);
             digest_pos = 0;
@@ -279,20 +250,6 @@ do_host_cloak_ip(const char *inbuf, char *outbuf)
     }
 }
 
-/*
- * do_host_cloak_host: cloak a reverse-DNS hostname.
- *
- * Structure is preserved (dots stay in place, label count unchanged)
- * so that wildcard bans on *.isp.example.com still function.
- *
- * Pass 1: replace letters in the first label using the base-26 alphabet,
- *         driven by successive digest bytes — digits and hyphens are left
- *         alone to keep the label plausibly hostname-shaped.
- * Pass 2: replace every digit in the full hostname, also from the digest.
- *
- * Both passes share one digest computed over the whole hostname so that
- * there is no correlation between what pass 1 leaks and what pass 2 leaks.
- */
 static void
 do_host_cloak_host(const char *inbuf, char *outbuf)
 {
@@ -305,11 +262,9 @@ do_host_cloak_host(const char *inbuf, char *outbuf)
     rb_strlcpy(outbuf, inbuf, HOSTLEN + 1);
     cloak_hash(inbuf, digest);
 
-    /* Pass 1: scramble letters in the first label only */
     for (tptr = outbuf; *tptr != '\0' && *tptr != '.'; tptr++) {
         if (isdigit((unsigned char)*tptr) || *tptr == '-')
             continue;
-
         if (digest_pos >= SHA256_BLOCK_SIZE) {
             cloak_hash((const char *)digest, digest);
             digest_pos = 0;
@@ -317,11 +272,9 @@ do_host_cloak_host(const char *inbuf, char *outbuf)
         *tptr = b26[digest[digest_pos++] % 26];
     }
 
-    /* Pass 2: scramble digits throughout the whole hostname */
     for (tptr = outbuf; *tptr != '\0'; tptr++) {
         if (!isdigit((unsigned char)*tptr))
             continue;
-
         if (digest_pos >= SHA256_BLOCK_SIZE) {
             cloak_hash((const char *)digest, digest);
             digest_pos = 0;
@@ -331,7 +284,7 @@ do_host_cloak_host(const char *inbuf, char *outbuf)
 }
 
 /* --------------------------------------------------------------------------
- * Host-change distribution (unchanged in logic, cleaned up)
+ * Host-change distribution
  * -------------------------------------------------------------------------- */
 
 static void
@@ -361,29 +314,45 @@ distribute_hostchange(struct Client *client_p, char *newhost)
 }
 
 /* --------------------------------------------------------------------------
- * Hook handlers (logic unchanged, style tidied)
+ * Hook handlers
  * -------------------------------------------------------------------------- */
+
+/*
+ * Free mangledhost when the client exits.
+ *
+ * Previously there was no client_exit hook at all, so every connecting
+ * client leaked HOSTLEN+1 bytes for the lifetime of the process.
+ *
+ * hook_data_client_exit gives us the client pointer in data->target.
+ * We guard against a NULL localClient (remote clients) and a NULL
+ * mangledhost (IP-spoofed clients that skipped the allocation).
+ */
+static void
+free_mangledhost(void *vdata)
+{
+    hook_data_client_exit *data     = (hook_data_client_exit *)vdata;
+    struct Client         *client_p = data->target;
+
+    if (!MyClient(client_p) || client_p->localClient == NULL)
+        return;
+
+    rb_free(client_p->localClient->mangledhost);
+    client_p->localClient->mangledhost = NULL;   /* poison the pointer */
+}
 
 static void
 check_umode_change(void *vdata)
 {
-    hook_data_umode_changed *data    = (hook_data_umode_changed *)vdata;
+    hook_data_umode_changed *data     = (hook_data_umode_changed *)vdata;
     struct Client           *source_p = data->client;
 
     if (!MyClient(source_p))
         return;
 
-    /* Only act when +x actually changed */
     if (!((data->oldumodes ^ source_p->umodes) & user_modes['x']))
         return;
 
     if (source_p->umodes & user_modes['x']) {
-        /*
-         * Refuse to apply the cloak if:
-         *  - the user is already IP-spoofed (we don't know the real host)
-         *  - no mangled host was pre-computed at connect time
-         *  - a third-party dynspoof is active and differs from our cloak
-         */
         if (IsIPSpoof(source_p)
                 || source_p->localClient->mangledhost == NULL
                 || (IsDynSpoof(source_p)
@@ -396,12 +365,10 @@ check_umode_change(void *vdata)
         if (strcmp(source_p->host, source_p->localClient->mangledhost) != 0)
             distribute_hostchange(source_p, source_p->localClient->mangledhost);
         else
-            /* Host is already the mangled one; just confirm to the user */
             sendto_one_numeric(source_p, RPL_HOSTHIDDEN,
                     "%s :is now your hidden host", source_p->host);
 
     } else {
-        /* +x unset: restore original host if we were the ones who changed it */
         if (source_p->localClient->mangledhost != NULL
                 && strcmp(source_p->host,
                           source_p->localClient->mangledhost) == 0)
@@ -419,18 +386,26 @@ check_new_user(void *vdata)
         return;
     }
 
+    /*
+     * Guard against double-allocation.
+     *
+     * check_new_user should only ever fire once per client, but if it
+     * somehow ran twice the old pointer would be silently overwritten
+     * and the first allocation permanently leaked.  Free any existing
+     * buffer before replacing it.
+     */
+    if (source_p->localClient->mangledhost != NULL) {
+        rb_free(source_p->localClient->mangledhost);
+        source_p->localClient->mangledhost = NULL;
+    }
+
     source_p->localClient->mangledhost = rb_malloc(HOSTLEN + 1);
 
-    /*
-     * Choose the cloaking strategy based on whether the displayed host
-     * is the raw socket address (no rDNS) or a resolved hostname.
-     */
     if (!irccmp(source_p->orighost, source_p->sockhost))
         do_host_cloak_ip(source_p->orighost, source_p->localClient->mangledhost);
     else
         do_host_cloak_host(source_p->orighost, source_p->localClient->mangledhost);
 
-    /* A pre-existing dynspoof means someone else already changed the host */
     if (IsDynSpoof(source_p)) {
         source_p->umodes &= ~user_modes['x'];
         return;
