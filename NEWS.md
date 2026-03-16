@@ -3,6 +3,40 @@
 This is comet 1.0
 See LICENSE for licensing details (GPL v2).
 
+## comet-1.3[Dev]
+
+### security
+
+- **Coaking:** - reverted to original source with key changes.
+* FNV → SHA-256 via a self-contained implementation (no external dep)
+* Bit rotation replaced with proper hash chaining — each character position consumes fresh hash bytes
+* IP cloaking now hashes the preserved prefix + hidden suffix together so the visible portion doesn't leak the full address
+* Host cloaking uses a single SHA-256 digest of the whole hostname to drive both passes, preventing correlation between the two-pass outputs
+* chartable widened to include digits in IP cloaking, eliminating the "looks like a hostname" ambiguity
+* Fixed the implicit int UB risk in the rotate — moot now but gone regardless
+
+## misc
+- **m_irccloud:** - IRCCloud ident-based cloak support
+*  - Password-free
+*  - Supports SID/UID wildcard auth blocks
+*  - Uses / separator in cloaks
+*  - Configurable cloak domain per auth block
+
+
+## comet-1.2
+
+Includes changes from Solanum
+
+### security
+- **Cloaking:** replaced FNV with HMAC-SHA256, full-address cloaking for both IPv4/IPv6/hostnames, random secret key. -- 2024 
+
+### misc
+- **Auotopic:** - default topic for freshly joined channels set via ircd.conf
+
+### oper/server
+- **Quarantine:** quarantined user will not be able to join channels or send messages to channels, with exception of explicitly allowlisted channels in ircd.conf. They will also not be able to send private messages to other users except opers or services.
+
+
 ## comet-1.1
 
 Includes changes from charybdis-4.1.3-dev.
