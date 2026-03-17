@@ -1,15 +1,11 @@
 /*
- *  ircd-ratbox: IRCCloud ident-based cloak support
- *  - Password-free
- *  - Supports SID/UID wildcard auth blocks
- *  - Uses / separator in cloaks
- *  - Configurable cloak domain per auth block
+ * ircd-ratbox: IRCCloud ident-based cloak support
  *
- *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu
- *  Copyright (C) 1996-2006 Hybrid/ratbox development team
- *  Adapted for IRCCloud by SnowFields 2025
+ * Fully supports auth name, disable_auth yes/no, no_tilde yes/no.
+ * Uses / separator in cloaks.
  *
- *  License: GPL v2 or later
+ * Adapted for IRCCloud by SnowFields 2025
+ * License: GPL v2 or later
  */
 
 #include "stdinc.h"
@@ -29,40 +25,52 @@
 #include "hook.h"
 #include <ctype.h>
 
-static const char icloud_desc[] = "IRCCloud ident-based cloak support (SID/UID wildcard, / separator)";
+static const char icloud_desc[] =
+"IRCCloud cloak support (introduce_client hook, auth + UID/SID fallback)";
 
 static void apply_cloak(void *data);
 static void send_notice(void *data);
 
 mapi_hfn_list_av1 icloud_hfnlist[] = {
-    { "new_local_user",   apply_cloak,  HOOK_LOWEST },
-    { "introduce_client", send_notice,  HOOK_LOWEST },
+    { "introduce_client", apply_cloak, HOOK_LOWEST },
+    { "introduce_client", send_notice, HOOK_LOWEST },
     { NULL, NULL }
 };
 
-DECLARE_MODULE_AV2(irccloud_cloak, NULL, NULL, NULL, NULL, icloud_hfnlist, NULL, NULL, icloud_desc);
+DECLARE_MODULE_AV2(
+    irccloud_cloak,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    icloud_hfnlist,
+    NULL,
+    NULL,
+    icloud_desc
+);
 
-/*
- * is_valid_ident_char - returns 1 if c is safe to embed in a hostname cloak.
- * Permits alphanumerics, hyphen, and underscore only.
- */
-static int
-is_valid_ident_char(char c)
+/* Strip leading ~ if present */
+static const char *get_ident(struct Client *source_p)
+{
+    const char *ident = source_p->username;
+    if (!ident || !*ident)
+        return ident;
+    if (*ident == '~')
+        ident++;
+    return ident;
+}
+
+/* Only allow alphanumeric, - and _ */
+static int is_valid_ident_char(char c)
 {
     return (isalnum((unsigned char)c) || c == '-' || c == '_');
 }
 
-/*
- * sanitise_ident - copies src into dst, replacing any character that is not
- * safe for embedding in a hostname with '_'.  dst is always NUL-terminated.
- * Returns 0 if the result is empty (i.e. nothing usable in the ident).
- */
-static int
-sanitise_ident(char *dst, size_t dstlen, const char *src)
+/* Sanitize ident for hostname */
+static int sanitise_ident(char *dst, size_t dstlen, const char *src)
 {
     size_t i = 0;
-
-    if (EmptyString(src) || dstlen == 0)
+    if (!src || dstlen == 0)
         return 0;
 
     for (; *src && i < dstlen - 1; src++, i++)
@@ -72,134 +80,96 @@ sanitise_ident(char *dst, size_t dstlen, const char *src)
     return (i > 0);
 }
 
-
-/*
- * apply_cloak - fired by h_new_local_user.
- *
- * Runs D-line and TLS checks, then mutates source_p->host with the
- * ident-based cloak.  No NOTICE is sent here — 001 has not been sent yet
- * and the UID burst to remote servers has not happened yet either, so the
- * mutated host will be picked up cleanly by both.
- *
- * The user-visible NOTICE is deferred to send_notice() which fires on
- * h_introduce_client, after the full registration burst is complete.
- */
-static void
-apply_cloak(void *data)
+/* Apply cloak when client is fully introduced */
+static void apply_cloak(void *data)
 {
-    struct Client   *source_p = data;
-    struct ConfItem *aconf    = source_p->localClient->att_conf;
-    struct ConfItem *dconf;
-    const char      *cloak_domain;
-    char             safe_ident[USERLEN + 1];
-    char             cloak[HOSTLEN + 1];
-    size_t           needed;
+    hook_data_client *hdata = data;
+    struct Client *source_p;
+    char safe_ident[USERLEN+1];
+    char cloak[HOSTLEN+1];
+    const char *ident;
+    const char *cloak_domain;
 
-    /* Auth block must exist and have a name (used as cloak domain). */
-    if (!aconf || EmptyString(aconf->info.name))
+    if (!hdata || !(source_p = hdata->target))
         return;
 
-    /* NOMATCH is the ircd sentinel meaning no real auth block matched this
-     * user — they fell through to the default catch-all.  Do not cloak. */
-    if (strcasecmp(aconf->info.name, "NOMATCH") == 0)
+    if (!MyClient(source_p) || !source_p->localClient)
         return;
 
-    /* Only cloak IRCCloud users, identified by their numeric UID/SID ident.
-     * Regular users will not have a uid* or sid* ident so are left alone. */
-    if (strncasecmp(source_p->username, "uid", 3) != 0 &&
-        strncasecmp(source_p->username, "sid", 3) != 0)
+    ident = get_ident(source_p);
+    if (!ident || !*ident)
         return;
 
-    /* D-line check before touching the client's host or sending anything. */
-    dconf = find_dline((struct sockaddr *)&source_p->localClient->ip,
-                       GET_SS_FAMILY(&source_p->localClient->ip));
-    if (dconf)
-    {
-        if (!(dconf->status & CONF_EXEMPTDLINE))
-        {
-            exit_client(source_p, source_p, &me, "D-lined");
-            return;
-        }
-    }
-
-    /* Reject non-TLS connections on auth blocks that require it. */
-    if (!IsSecure(source_p) && (aconf->flags & CONF_FLAGS_NEED_SSL))
-    {
-        exit_client(source_p, source_p, &me, "IRCCloud connections require TLS");
+    /* Only cloak UID/SID clients */
+    if (strncasecmp(ident,"uid",3) != 0 && strncasecmp(ident,"sid",3) != 0)
         return;
-    }
 
-    /* The auth block's spoof name is used as the cloak domain. */
-    cloak_domain = aconf->info.name;
-
-    /* Strip a leading "sid" prefix so the cloak reads as
-     * 560670/gateway/irccloud rather than sid560670/gateway/irccloud.
-     * uid prefixes are left intact intentionally. */
-    const char *ident = source_p->username;
-    if (strncasecmp(ident, "sid", 3) == 0)
+    /* Strip SID prefix */
+    if (strncasecmp(ident,"sid",3) == 0)
         ident += 3;
 
-    if (sanitise_ident(safe_ident, sizeof(safe_ident), ident))
+    /* Determine cloak domain */
+    if (source_p->localClient->att_conf &&
+        !EmptyString(source_p->localClient->att_conf->info.name) &&
+        strcasecmp(source_p->localClient->att_conf->info.name,"NOMATCH") != 0)
     {
-        /* Verify the assembled cloak fits before committing.
-         * needed = len(safe_ident) + 1 ('/') + len(cloak_domain) + NUL */
-        needed = strlen(safe_ident) + 1 + strlen(cloak_domain) + 1;
-        if (needed > sizeof(cloak))
+        /* Use auth block name as cloak domain */
+        cloak_domain = source_p->localClient->att_conf->info.name;
+    }
+    else
+    {
+        /* fallback when auth missing or disable_auth = yes */
+        cloak_domain = "gateway/irccloud";
+    }
+
+    /* Sanitize ident */
+    if (!sanitise_ident(safe_ident,sizeof(safe_ident),ident))
+    {
+        rb_strlcpy(cloak, source_p->sockhost, sizeof(cloak));
+    }
+    else
+    {
+        size_t needed = strlen(safe_ident) + 1 + strlen(cloak_domain) + 1;
+        if (needed >= sizeof(cloak))
         {
             rb_strlcpy(cloak, source_p->sockhost, sizeof(cloak));
             sendto_wallops_flags(UMODE_OPERWALL, &me,
-                "IRCCloud cloak overflow for %s!%s -- falling back to sockhost",
+                "IRCCloud cloak overflow for %s!%s",
                 source_p->name, source_p->username);
         }
         else
         {
-            rb_strlcpy(cloak, safe_ident,   sizeof(cloak));
-            rb_strlcat(cloak, "/",          sizeof(cloak));
+            rb_strlcpy(cloak, safe_ident, sizeof(cloak));
+            rb_strlcat(cloak, "/", sizeof(cloak));
             rb_strlcat(cloak, cloak_domain, sizeof(cloak));
         }
     }
-    else
-    {
-        /* No usable ident — fall back to the raw socket address. */
-        rb_strlcpy(cloak, source_p->sockhost, sizeof(cloak));
-    }
 
+    /* Apply cloak */
     rb_strlcpy(source_p->host, cloak, sizeof(source_p->host));
-
-    /* NOTICE is deliberately omitted here.
-     * It is sent by send_notice() once registration is complete. */
 }
 
-/*
- * send_notice - fired by h_introduce_client.
- *
- * h_introduce_client is called at the very end of register_local_user(),
- * after the 001-376 welcome burst has been sent to the client and after
- * the UID has been propagated to remote servers.  It is therefore the
- * correct place to send user-visible output that must follow 001.
- *
- * hdata->client is the server-side client_p (uplink/self).
- * hdata->target is source_p, the user who just registered.
- */
-static void
-send_notice(void *data)
+/* Send user-visible NOTICE after cloak applied */
+static void send_notice(void *data)
 {
-    hook_data_client *hdata    = data;
-    struct Client    *source_p = hdata->target;
+    hook_data_client *hdata = data;
+    struct Client *source_p;
 
-    /* Only act on local clients. Guard against non-local or
-     * already-exited clients defensively. */
+    if (!hdata || !(source_p = hdata->target))
+        return;
+
     if (!MyClient(source_p) || !source_p->localClient)
         return;
 
-    /* Only notify for IRCCloud users. */
-    struct ConfItem *aconf = source_p->localClient->att_conf;
-    if (!aconf || EmptyString(aconf->info.name))
+    const char *ident = get_ident(source_p);
+    if (!ident || !*ident)
         return;
 
-    if (strncasecmp(source_p->username, "uid", 3) != 0 &&
-        strncasecmp(source_p->username, "sid", 3) != 0)
+    /* Only notify for UID/SID clients */
+    if (strncasecmp(ident,"uid",3) != 0 && strncasecmp(ident,"sid",3) != 0)
         return;
 
-    sendto_one(source_p, "NOTICE * :IRCCloud cloak set to %s", source_p->host);
+    sendto_one(source_p,
+               "NOTICE * :IRCCloud cloak set to %s",
+               source_p->host);
 }
