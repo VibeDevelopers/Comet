@@ -47,6 +47,7 @@ extension_LTLIBRARIES =		\
   m_extendchans.la		\
   m_findforwards.la		\
   m_identify.la			\
+  m_irccloud.la			\
   m_locops.la			\
   m_mkpasswd.la			\
   m_ojoin.la			\
