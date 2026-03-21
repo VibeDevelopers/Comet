@@ -29,11 +29,9 @@ static const char icloud_desc[] =
 "IRCCloud cloak support (introduce_client hook, auth + UID/SID fallback)";
 
 static void apply_cloak(void *data);
-static void send_notice(void *data);
 
 mapi_hfn_list_av1 icloud_hfnlist[] = {
     { "introduce_client", apply_cloak, HOOK_LOWEST },
-    { "introduce_client", send_notice, HOOK_LOWEST },
     { NULL, NULL }
 };
 
@@ -90,6 +88,7 @@ static void apply_cloak(void *data)
     const char *ident;
     const char *cloak_domain;
 
+    /* NULL checks */
     if (!hdata || !(source_p = hdata->target))
         return;
 
@@ -104,21 +103,20 @@ static void apply_cloak(void *data)
     if (strncasecmp(ident,"uid",3) != 0 && strncasecmp(ident,"sid",3) != 0)
         return;
 
-    /* Strip SID prefix */
+    /* Strip SID prefix if present */
     if (strncasecmp(ident,"sid",3) == 0)
         ident += 3;
 
-    /* Determine cloak domain */
+    /* Determine cloak domain safely */
     if (source_p->localClient->att_conf &&
+        source_p->localClient->att_conf->info.name &&
         !EmptyString(source_p->localClient->att_conf->info.name) &&
         strcasecmp(source_p->localClient->att_conf->info.name,"NOMATCH") != 0)
     {
-        /* Use auth block name as cloak domain */
         cloak_domain = source_p->localClient->att_conf->info.name;
     }
     else
     {
-        /* fallback when auth missing or disable_auth = yes */
         cloak_domain = "gateway/irccloud";
     }
 
@@ -147,28 +145,8 @@ static void apply_cloak(void *data)
 
     /* Apply cloak */
     rb_strlcpy(source_p->host, cloak, sizeof(source_p->host));
-}
 
-/* Send user-visible NOTICE after cloak applied */
-static void send_notice(void *data)
-{
-    hook_data_client *hdata = data;
-    struct Client *source_p;
-
-    if (!hdata || !(source_p = hdata->target))
-        return;
-
-    if (!MyClient(source_p) || !source_p->localClient)
-        return;
-
-    const char *ident = get_ident(source_p);
-    if (!ident || !*ident)
-        return;
-
-    /* Only notify for UID/SID clients */
-    if (strncasecmp(ident,"uid",3) != 0 && strncasecmp(ident,"sid",3) != 0)
-        return;
-
+    /* Notify user safely */
     sendto_one(source_p,
                "NOTICE * :IRCCloud cloak set to %s",
                source_p->host);
