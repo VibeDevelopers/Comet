@@ -26,7 +26,7 @@
 #include <client.h>
 #include <msgbuf.h>
 
-static char cap_oper_desc[] = "Provides the solanum.chat/oper capability";
+static char cap_oper_desc[] = "Provides the comet.chat/oper capability";
 
 static bool cap_oper_oper_visible(struct Client *);
 static void cap_oper_outbound_msgbuf(void *);
@@ -95,18 +95,18 @@ update_clicap_oper(struct Client *client)
 	if (IsClientCapable(client, CLICAP_OPER) && HasPrivilege(client, "auspex:oper"))
 	{
 		/* if the client is an oper with auspex, let them see everything */
-		client->localClient->client_caps |= CLICAP_OPER_AUSPEX;
+		SetClientCap(client, CLICAP_OPER_AUSPEX);
 	}
 	else if (IsClientCapable(client, CLICAP_OPER) && IsOper(client))
 	{
 		/* if the client is an oper, let them see other opers */
-		client->localClient->client_caps |= CLICAP_OPER_JUSTOPER;
+		SetClientCap(client, CLICAP_OPER_JUSTOPER);
 	}
 	else if (IsClientCapable(client, CLICAP_OPER))
 	{
 		/* if the client is a normal user, let them see opers
 		   provided that server wide oper hiding is not enabled */
-		client->localClient->client_caps |= CLICAP_OPER_NORMAL;
+		SetClientCap(client, CLICAP_OPER_NORMAL);
 	}
 }
 
