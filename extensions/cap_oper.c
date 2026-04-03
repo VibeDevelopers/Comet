@@ -26,7 +26,7 @@
 #include <client.h>
 #include <msgbuf.h>
 
-static char cap_oper_desc[] = "Provides the comet.chat/oper capability";
+static char cap_oper_desc[] = "Provides the solanum.chat/oper capability";
 
 static bool cap_oper_oper_visible(struct Client *);
 static void cap_oper_outbound_msgbuf(void *);
@@ -43,7 +43,7 @@ static struct ClientCapability capdata_oper_oper = {
 };
 
 mapi_cap_list_av2 cap_oper_caps[] = {
-	{ MAPI_CAP_CLIENT, "comet.chat/oper", NULL, &CLICAP_OPER },
+	{ MAPI_CAP_CLIENT, "solanum.chat/oper", NULL, &CLICAP_OPER },
 	{ MAPI_CAP_CLIENT, "?oper_auspex", &capdata_oper_oper, &CLICAP_OPER_AUSPEX },
 	{ MAPI_CAP_CLIENT, "?oper_justoper", &capdata_oper_oper, &CLICAP_OPER_JUSTOPER },
 	{ MAPI_CAP_CLIENT, "?oper_normal", &capdata_oper_oper, &CLICAP_OPER_NORMAL },
@@ -75,12 +75,12 @@ cap_oper_outbound_msgbuf(void *data_)
 	if (IsOper(data->client))
 	{
 		/* send all oper data to auspex */
-		msgbuf_append_tag(msgbuf, "comet.chat/oper", data->client->user->opername, CLICAP_OPER_AUSPEX);
+		msgbuf_append_tag(msgbuf, "solanum.chat/oper", data->client->user->opername, CLICAP_OPER_AUSPEX);
 		if (HasPrivilege(data->client, "oper:hidden") || ConfigFileEntry.hide_opers)
 			/* these people aren't allowed to see hidden opers */
 			return;
-		msgbuf_append_tag(msgbuf, "comet.chat/oper", data->client->user->opername, CLICAP_OPER_JUSTOPER);
-		msgbuf_append_tag(msgbuf, "comet.chat/oper", NULL, CLICAP_OPER_NORMAL);
+		msgbuf_append_tag(msgbuf, "solanum.chat/oper", data->client->user->opername, CLICAP_OPER_JUSTOPER);
+		msgbuf_append_tag(msgbuf, "solanum.chat/oper", NULL, CLICAP_OPER_NORMAL);
 	}
 }
 
@@ -88,25 +88,25 @@ static inline void
 update_clicap_oper(struct Client *client)
 {
 	/* clear out old caps */
-	client->localClient->caps &= ~CLICAP_OPER_AUSPEX;
-	client->localClient->caps &= ~CLICAP_OPER_JUSTOPER;
-	client->localClient->caps &= ~CLICAP_OPER_NORMAL;
+	ClearClientCap(client, CLICAP_OPER_AUSPEX);
+	ClearClientCap(client, CLICAP_OPER_JUSTOPER);
+	ClearClientCap(client, CLICAP_OPER_NORMAL);
 
-	if (client->localClient->caps & CLICAP_OPER && HasPrivilege(client, "auspex:oper"))
+	if (IsClientCapable(client, CLICAP_OPER) && HasPrivilege(client, "auspex:oper"))
 	{
 		/* if the client is an oper with auspex, let them see everything */
-		client->localClient->caps |= CLICAP_OPER_AUSPEX;
+		client->localClient->client_caps |= CLICAP_OPER_AUSPEX;
 	}
-	else if (client->localClient->caps & CLICAP_OPER && IsOper(client))
+	else if (IsClientCapable(client, CLICAP_OPER) && IsOper(client))
 	{
 		/* if the client is an oper, let them see other opers */
-		client->localClient->caps |= CLICAP_OPER_JUSTOPER;
+		client->localClient->client_caps |= CLICAP_OPER_JUSTOPER;
 	}
-	else if (client->localClient->caps & CLICAP_OPER)
+	else if (IsClientCapable(client, CLICAP_OPER))
 	{
 		/* if the client is a normal user, let them see opers
 		   provided that server wide oper hiding is not enabled */
-		client->localClient->caps |= CLICAP_OPER_NORMAL;
+		client->localClient->client_caps |= CLICAP_OPER_NORMAL;
 	}
 }
 
