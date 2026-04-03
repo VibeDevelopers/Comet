@@ -107,7 +107,6 @@ DECLARE_MODULE_AV2(services, _modinit, _moddeinit, services_clist, services_hlis
 static int
 _modinit(void)
 {
-	mark_services();
 	add_isupport("FNC", isupport_string, "");
 	return 0;
 }
