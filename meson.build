@@ -1,7 +1,7 @@
 project('comet', 'c',
   version: '1.2-dev',
   default_options: ['c_std=c99', 'warning_level=0'],
-  meson_version: '>=0.62.0', # dependency('dl')
+  meson_version: '>=0.61.2', # dependency('dl')
   license: 'GPLv2'
 )
 
