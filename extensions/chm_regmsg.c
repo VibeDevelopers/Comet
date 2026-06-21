@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * chm_regmsg: require identification to chat (+R mode).
  *
  * Copyright (c) 2020 Eric Mertens <emertens@gmail.com>

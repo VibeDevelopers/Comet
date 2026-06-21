@@ -1,5 +1,5 @@
 #!/bin/sh
-# application.sh: Special package building rules for solanum.
+# application.sh: Special package building rules for comet.
 #
 # Copyright (c) 2007-2008 atheme.org
 #
@@ -24,11 +24,11 @@ if [ "x$TIP" = "x" ]; then
 	exit
 fi
 
-# Solanum wants the git head to be in include/serno.h, in its own format.
+# Comet wants the git head to be in include/serno.h, in its own format.
 SERNO=`git rev-list -1 --no-commit-header --date=format:%Y%m%d --format=%cd-%h HEAD`
 DATECODE=`git rev-list -1 --no-commit-header --format=%ct HEAD`
 
-echo "[solanum] Generating include/serno.h for tip $MYTIP."
+echo "[comet] Generating include/serno.h for tip $MYTIP."
 cat << _EOF_ > include/serno.h
 /* Generated automatically by makepackage. Any changes made here will be lost. */
 #define SERNO "$SERNO"

@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * ircd_linker.h: IRCd symbol table linking and maintainance
  *
  * Copyright (c) 2006 Ariadne Conill <ariadne@dereferenced.org>

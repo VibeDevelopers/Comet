@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * chm_nocolour: strip colours (+c mode).
  *
  * Copyright (c) 2012 Ariadne Conill <ariadne@dereferenced.org>

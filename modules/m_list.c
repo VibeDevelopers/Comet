@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * m_list_safelist.c: Version of /list that uses the safelist code.
  *
  * Copyright (c) 2006 Ariadne Conill <ariadne@dereferenced.org>

@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * rb_radixtree.h: Dictionary-based storage.
  *
  * Copyright (c) 2007-2016 Ariadne Conill <ariadne -at- dereferenced.org>

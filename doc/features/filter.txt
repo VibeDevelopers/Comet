@@ -2,7 +2,7 @@ extensions/filter module documentation
 --------------------------------------
 
 The filter extension implements message content filtering using 
-solanum's hook framework and Intel's Hyperscan regular expression
+comet's hook framework and Intel's Hyperscan regular expression
 matching library.
 
 It requires an x86_64 processor with SSSE3 extensions.

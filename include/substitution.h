@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * markup.h: parses markup into human-readable strings
  *
  * Copyright (c) 2006-2007 Ariadne Conill <ariadne@dereferenced.org>

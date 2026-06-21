@@ -5,7 +5,7 @@ tools = {
   'mkfingerprint': [librb_dep],
 }
 foreach name, deps : tools
-  executable('solanum-' + name,
+  executable('comet-' + name,
     name + '.c',
     dependencies: deps,
     include_directories: tools_inc,

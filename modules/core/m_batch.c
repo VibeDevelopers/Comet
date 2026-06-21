@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * m_batch.c: provides support for client-initiated and propagated BATCH commands
  *
  * Copyright (c) 2025 Ryan Schmidt <skizzerz@skizzerz.net>

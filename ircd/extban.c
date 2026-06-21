@@ -1,5 +1,5 @@
 /*
- *  Solanum: a slightly advanced ircd
+ *  Comet: a slightly advanced ircd
  *  extban.c: extended ban types ($type:data)
  *
  * Copyright (C) 2006 charybdis development team

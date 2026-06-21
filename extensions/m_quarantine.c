@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * m_quarantine.c: restrict connections until they identify to services
  *
  * Copyright (c) 2026 Ryan Schmidt <skizzerz@skizzerz.net>

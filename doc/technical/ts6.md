@@ -1,8 +1,8 @@
 # TS6 protocol documentation
 
-TS6 is the server-to-server protocol spoken by solanum and its predecessors
+TS6 is the server-to-server protocol spoken by comet and its predecessors
 (e.g. charybdis, ratbox). This document aims to describe the protocol
-comprehensively as it pertains to solanum. Other TS6-based IRCds may feature
+comprehensively as it pertains to comet. Other TS6-based IRCds may feature
 their own extensions to the protocol which are not mentioned here.
 
 ## Concepts
@@ -13,7 +13,7 @@ portion unless both sides of the link have the **STAG** capability. If tags
 are supplied, there is a limit of 30 tags. Byte limits are the same as the
 client-to-server protocol. When sending messages, the prefix (origin) must be
 a user or server that is reachable via you from the server you are sending it
-to; you cannot spoof messages from "fake" directions. When solanum receives an
+to; you cannot spoof messages from "fake" directions. When comet receives an
 unrecognized non-`ENCAP` command from a server link, it will abort the link.
 
 Both servers and users have IDs which remain stable for the life of their
@@ -36,7 +36,7 @@ the expected propagation behavior for that command.
 
 As part of the connection handshake, servers exchange the set of capabilities
 that they support. Capabilities are a way to extend the base TS6 protocol with
-additional commands. solanum requires certain capabilities in order to
+additional commands. comet requires certain capabilities in order to
 successfully link with it. If a server lacks a particular capability, commands
 gated behind that capability must not be sent to that server. If a server
 receives an unknown command, it should terminate the link by disconnecting the
@@ -95,7 +95,7 @@ segment of the network's spanning tree.
 
 Capabilities and commands will have an implementation status of one of the
 following values, indicating whether we recommend that servers or services
-linking to solanum should support the capability or command:
+linking to comet should support the capability or command:
 
 - Required: support for it is required to be implemented
 - Recommended: implementing it is highly recommended in general
@@ -110,7 +110,7 @@ linking to solanum should support the capability or command:
   is either mandatory or uses `ENCAP`, so the presence or absence of this
   capability in `CAPAB` is irrelevant
 
-Solanum distinguishes between commands sent by a server as the source (prefix)
+Comet distinguishes between commands sent by a server as the source (prefix)
 and commands sent by a user as the source. Each command will distinguish what
 type of source is expected by each command. Sending the wrong type of source
 will cause the command to be unrecognized over the S2S link and result in link
@@ -225,7 +225,7 @@ a netjoin burst or `JOIN` for regular channel creation races.
 
 ## Linking
 
-Solanum allows both C2S and S2S connections on the same port. To introduce
+Comet allows both C2S and S2S connections on the same port. To introduce
 yourself as a server, pass the following commands in order:
 
 1. `PASS`
@@ -295,13 +295,13 @@ capabilities. If the services package provides the ability to set network bans
 (e.g. AKILL) it should additionally support and advertise the **BAN**
 capability. While optional, supporting and advertising **ECHO** will provide
 better echo-message support for clients; if the services package does not
-support **ECHO** then an echo-message will be generated from the solanum
+support **ECHO** then an echo-message will be generated from the comet
 server directly linked to services instead. Other optional capabilities are
 not relevant when it comes to implementing services.
 
 ## Capabilities
 
-Solanum supports the following server capabilities (enabled via `CAPAB`):
+Comet supports the following server capabilities (enabled via `CAPAB`):
 
 | Capability | Module    | Implementation | Description                                          |
 |------------|-----------|----------------|------------------------------------------------------|
@@ -454,8 +454,8 @@ detail in subsections in alphabetical order. Commands which are sent over
 - Syntax: `ENCAP <server> ACK`
 
 Acknowledges a command which returned no response when a labeled-response was
-requested for a remote command via the solanum.chat/response tag. The `ACK`
-must forward the solanum.chat/response tag back to the server which originated
+requested for a remote command via the comet.chat/response tag. The `ACK`
+must forward the comet.chat/response tag back to the server which originated
 the command.
 
 ### ADMIN
@@ -828,7 +828,7 @@ NOTICE.
 - Syntax: `ENCAP <server mask> <command> [<params...>]`
 
 This command is used to encapsulate another command for propagation to other
-servers. Because solanum will close server links upon receiving unknown
+servers. Because comet will close server links upon receiving unknown
 commands, `ENCAP` provides an easy way to optionally extend the protocol via
 loaded modules without needing to define new capabilities. If a recipient
 server matches the mask but does not understand the encapsulated command, it
@@ -960,7 +960,7 @@ Parameters:
 - Implementation: optional
 - Syntax: `ENCAP <server> EXTENDCHANS <target>`
 
-Increases the maximum number of channels the target can join. For solanum, the
+Increases the maximum number of channels the target can join. For comet, the
 new limit is determined by the max_chans_per_user_large setting in ircd.conf.
 The target server determines the new limit, rather than the sending server.
 
@@ -1008,8 +1008,8 @@ target server.
 - Syntax: `ENCAP * IDENTIFIED <target> <nick> [OFF]`
 
 Marks the target as identified to the services account that owns the target's
-current nickname. This has no effect on anything in solanum outside of the
-vendor solanum.chat/identify-msg client capability (e.g. it does not allow the
+current nickname. This has no effect on anything in comet outside of the
+vendor comet.chat/identify-msg client capability (e.g. it does not allow the
 target to join a +r channel or speak in a +R channel).
 
 The nick parameter must match the target's current nickname or the command
@@ -1104,13 +1104,13 @@ listing of server name, user's hostname, user's username, and user's nick. The
 path is relayed as-is without modification or validation; while RFC 1459
 recommends prepending the current server to the path, doing this could cause
 the message to exceed the 512-byte limit. As such, it is best to not
-manipulate the path. External (non-solanum) servers may use their own
+manipulate the path. External (non-comet) servers may use their own
 formatting for the path parameter provided that it does not contain spaces;
 there is no requirement that the path be any specific format.
 
 The reason parameter is surrounded by parenthesis by convention. This is not a
 strict requirement of the protocol and the parenthesis may be omitted.
-However, it is best to include them for consistency with solanum-generated
+However, it is best to include them for consistency with comet-generated
 kill messages.
 
 ### KLINE
@@ -1225,7 +1225,7 @@ hunted server to the source user. The first parameter is unused and ignored.
 Sent by services to indicate the SASL mechanisms it supports. The mechs
 parameter is a comma-separated list of mechanism names that should be
 advertised to clients as the value for the sasl capability in `CAP LS 302`.
-Solanum does not validate incoming SASL `AUTHENTICATE` commands against this
+Comet does not validate incoming SASL `AUTHENTICATE` commands against this
 list; it is purely informational.
 
 If the list of supported mechanisms changes, services should send an updated
@@ -1421,7 +1421,7 @@ server links if there are no clients in the channel behind that link.
 
 Sends an "op moderated" message to the channel (for channel mode +z). This is
 treated as an @#channel STATUSMSG; however, the source does not need to be
-opped. When propagating, solanum uses the following matrix to determine what
+opped. When propagating, comet uses the following matrix to determine what
 message is sent based on the capabilities of the downstream server as well as
 whether the channel is moderated (mode +m) or not:
 
@@ -1455,10 +1455,10 @@ server links if there are no clients in the channel behind that link.
 - Implementation: optional
 - Syntax: `NOTICE <target>@<server> :<message>`
 
-Sends a notice to a client, who must be on the specified server. Solanum
+Sends a notice to a client, who must be on the specified server. Comet
 internally rejects this format for local clients, but will still propagate it
 so that pseudoservers and services can accept this syntax. The target need not
-actually exist on the specified server or be known to solanum for it to
+actually exist on the specified server or be known to comet for it to
 propagate this message onwards.
 
 ----
@@ -1573,7 +1573,7 @@ The version number must be at least 6 in order to establish a link.
 
 Sends a ping request to a locally-connected server. The origin parameter is
 ignored, but historically should be the server name (not SID) of the server
-sending the `PING`. Solanum does send the SID for this parameter instead in
+sending the `PING`. Comet does send the SID for this parameter instead in
 some cases, such as for the EOB in netjoin bursts.
 
 ----
@@ -1666,10 +1666,10 @@ server links if there are no clients in the channel behind that link.
 - Implementation: optional
 - Syntax: `PRIVMSG <target>@<server> :<message>`
 
-Sends a message to a client, who must be on the specified server. Solanum
+Sends a message to a client, who must be on the specified server. Comet
 internally rejects this format for local clients, but will still propagate it
 so that pseudoservers and services can accept this syntax. The target need not
-actually exist on the specified server or be known to solanum for it to
+actually exist on the specified server or be known to comet for it to
 propagate this message onwards.
 
 ----
@@ -1816,7 +1816,7 @@ Note: This command does not support temporary server-specific RESVs;
 Sets a RESV (nickname or channel name ban) on matching servers. The duration
 is in minutes, with a value of 0 indicating a permanent ban. Nickname bans may
 contain wildcards, but channel name bans may not. The parameter before the
-reason is ignored by solanum but should be sent as a literal "0" for
+reason is ignored by comet but should be sent as a literal "0" for
 historical reasons.
 
 The reason field indicates the reason for the ban; it is not shown to
@@ -1965,13 +1965,13 @@ Completes a SASL exchange.
 Commands sent to services will only ever have type "A" indicating the user
 aborted SASL. Commands sent from services should only ever have "F" or "S". In
 rare cases (such as SaslServ disconnecting in the middle of a SASL exchange),
-aborts sent by solanum may be broadcast instead (server parameter of "\*")
+aborts sent by comet may be broadcast instead (server parameter of "\*")
 with an agent parameter of "\*" as well.
 
 When received by the user's server, it will be relayed to the user using the
 appropriate numeric corresponding to the type.
 
-Note: Services does not need to reply to an abort sent by solanum.
+Note: Services does not need to reply to an abort sent by comet.
 
 ----
 
@@ -2084,7 +2084,7 @@ Action is one of the following:
 Appends data to the in-progress transaction. The check parameter must match
 the one sent with the NEW action. The data must be sent as a base64-encoded
 string and will be decoded before being appended to the transaction buffer.
-Solanum currently has a hard limit of 10MB for the overall (decoded) database
+Comet currently has a hard limit of 10MB for the overall (decoded) database
 size and will reject databases larger than this.
 
 ### SHEDDING (E)
@@ -2188,7 +2188,7 @@ Examples:
 Broadcasts a server notice. The letter dictates the snomask letter an oper
 must have to receive the notice. An unrecognized letter will result in the
 command being ignored. Consult the help/opers/snomask file for a listing of
-all letters recognized by default or with an extension module in solanum.
+all letters recognized by default or with an extension module in comet.
 
 ### SQUIT
 
@@ -2213,7 +2213,7 @@ and propagate an `SQUIT` for that server instead to its downstream servers.
 Requests statistics from the server on behalf of a remote user. `STATS` letter
 definitions are not part of the TS6 protocol (and need not be actual letters);
 some servers may support different subsets of letters than other servers. For
-a listing of letters that solanum supports, consult the help/opers/stats file.
+a listing of letters that comet supports, consult the help/opers/stats file.
 Privileges are checked by the server actually handling the request.
 
 ### SU (E)
@@ -2246,7 +2246,7 @@ rather than two (`ENCAP SU` + `CHGHOST`).
 Sent by a server during registration. The current parameter is the TS server
 protocol version that the server currently supports and the min parameter is
 the minimum TS server protocol version that the server supports. For linking
-to solanum, both of these parameters must be 6. The time parameter is the
+to comet, both of these parameters must be 6. The time parameter is the
 current unix timestamp for the server. If the delta between this timestamp and
 the local server's timestamp is too large, the link will be dropped.
 
@@ -2288,7 +2288,7 @@ broadcast to other servers via the `SIGNON` message.
 - Implementation: recommended
 - Syntax: `TAGMSG <channel>`
 
-Sends tags to a channel. Solanum implements tag filtering; commands without
+Sends tags to a channel. Comet implements tag filtering; commands without
 tags after filtering is performed will be dropped.
 
 This command is propagated similarly to "broadcast" except it is not sent to
@@ -2302,7 +2302,7 @@ server links if there are no clients in the channel behind that link.
 - Implementation: recommended
 - Syntax: `TAGMSG <target>`
 
-Sends tags to a client. Solanum implements tag filtering; commands without
+Sends tags to a client. Comet implements tag filtering; commands without
 tags after filtering is performed will be dropped.
 
 ----
@@ -2317,7 +2317,7 @@ Sends tags to users with a given prefix or above on a channel. The prefix may
 be either "+" to send to voiced users and ops on the channel, or "@" to send
 to only ops. If the source is a user, they must have status equal to or
 greater than the selected prefix. This command is not propagated to servers
-which do not support **CHW**. Solanum implements tag filtering; commands
+which do not support **CHW**. Comet implements tag filtering; commands
 without tags after filtering is performed will be dropped.
 
 This command is propagated similarly to "broadcast" except it is not sent to
@@ -2334,7 +2334,7 @@ server links if there are no clients in the channel behind that link.
 Sends "op moderated" tag to the channel (for channel mode +z). This is treated
 as an @#channel `TAGMSG`; however, the source does not need to be opped. When
 propagating, follow the same fallback matrix as `NOTICE` for =#channel
-messages. Solanum implements tag filtering; commands without tags after
+messages. Comet implements tag filtering; commands without tags after
 filtering is performed will be dropped.
 
 This command is propagated similarly to "broadcast" except it is not sent to
@@ -2348,11 +2348,11 @@ server links if there are no clients in the channel behind that link.
 - Implementation: optional
 - Syntax: `TAGMSG <target>@<server>`
 
-Sends tags to a client, who must be on the specified server. Solanum
+Sends tags to a client, who must be on the specified server. Comet
 internally rejects this format for local clients, but will still propagate it
 so that pseudoservers and services can accept this syntax. The target need not
-actually exist on the specified server or be known to solanum for it to
-propagate this message onwards. Solanum implements tag filtering; commands
+actually exist on the specified server or be known to comet for it to
+propagate this message onwards. Comet implements tag filtering; commands
 without tags after filtering is performed will be dropped.
 
 Note: while this syntax is supported due to `NOTICE`, `PRIVMSG`, and `TAGMSG`
@@ -2369,7 +2369,7 @@ should be avoided. It may be removed in the future.
 
 Sends a mass-tagmsg to all clients on servers matching the server mask. The
 mask may contain wildcards. The source must be an oper or else this command is
-rejected. Solanum implements tag filtering; commands without tags after
+rejected. Comet implements tag filtering; commands without tags after
 filtering is performed will be dropped.
 
 Note: while this syntax is supported due to `NOTICE`, `PRIVMSG`, and `TAGMSG`
@@ -2386,7 +2386,7 @@ should be avoided. It may be removed in the future.
 
 Sends a mass-tagmsg to all clients whose hostnames match the given mask. The
 mask may contain wildcards. The source must be an oper or else this command is
-rejected. Solanum implements tag filtering; commands without tags after
+rejected. Comet implements tag filtering; commands without tags after
 filtering is performed will be dropped.
 
 Note: while this syntax is supported due to `NOTICE`, `PRIVMSG`, and `TAGMSG`
@@ -2698,7 +2698,7 @@ this is not a requirement of the protocol.
 - Syntax: `WHOWAS <nick> <max> :<hunted>`
 
 Executes a remote `WHOWAS` query to display up to max entries regarding the
-target nickname. Solanum caps the max parameter to 20 (treating values above
+target nickname. Comet caps the max parameter to 20 (treating values above
 that as 20 instead) for incoming remote `WHOWAS` queries.
 
 ### XLINE
@@ -2723,7 +2723,7 @@ set of wildcards and escape sequences:
 
 The reason field indicates the reason for the ban; it is not shown to
 normal users, only opers. The parameter before the reason is ignored by
-solanum but should be sent as a literal "2" for historical reasons.
+comet but should be sent as a literal "2" for historical reasons.
 
 If an x-line for the mask already exists, this command will be ignored locally
 (but still propagated). When propagating this command, send `XLINE` to servers
@@ -2758,7 +2758,7 @@ escape sequences:
 
 The reason field indicates the reason for the ban; it is not shown to
 normal users, only opers. The parameter before the reason is ignored by
-solanum but should be sent as a literal "2" for historical reasons.
+comet but should be sent as a literal "2" for historical reasons.
 
 If an x-line for the the mask already exists, this command will be ignored.
 
@@ -2777,7 +2777,7 @@ tag. Unrecognized tags are stripped and not propagated further.
 | batch                  | m_batch              | required       |
 | msgid                  | tag_message_id       | recommended    |
 | time                   | cap_server_time      | recommended    |
-| solanum.chat/response  | cap_labeled_response | required       |
+| comet.chat/response  | cap_labeled_response | required       |
 | +channel-context       | tag_channel_context  | optional       |
 | +reply                 | tag_reply            | optional       |
 | +typing                | tag_typing           | optional       |
@@ -2804,9 +2804,9 @@ with the +reply client-only tag, generated msgids should adhere to the string
 If a particular value is below the number of characters specified, it must be
 zero-padded to the left to meet the character count. Other msgid formats will
 still be relayed faithfully to clients, but they will not be able to create a
-+reply to them from solanum servers.
++reply to them from comet servers.
 
-### solanum.chat/response
+### comet.chat/response
 
 This tag may be attached to any message and is used for propagation of labeled
 responses between servers (for labeled-response). The tag value must be
@@ -2848,10 +2848,10 @@ The +typing client-only tag is forwarded as-is between servers.
 In addition to requiring **STAG** due to the batch tag needing to be present
 on messages inside of the batch, each batch type has its own capability that
 must be present on both sides of the link before batches of that type can be
-sent across the link. Solanum delays processing batches until the complete
+sent across the link. Comet delays processing batches until the complete
 batch has been received. Servers can have any number of in-flight batches, can
 nest batches, and can interleave batched and non-batched messages. Open S2S
 batches do not time out automatically and will remain open until the remote
 server finishes it or disconnects.
 
-Solanum does not currently support any S2S batch types.
+Comet does not currently support any S2S batch types.

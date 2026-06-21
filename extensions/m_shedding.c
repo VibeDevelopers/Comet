@@ -1,5 +1,5 @@
 /*
- *  Solanum: a slightly advanced ircd
+ *  Comet: a slightly advanced ircd
  *  shedding.c: Enables/disables user shedding.
  *
  *  Based on oftc-hybrid's m_shedding.c

@@ -47,7 +47,7 @@
 serverinfo {
 	name = "hades.arpa";
 	sid = "42X";
-	description = "solanum test server";
+	description = "comet test server";
 	network_name = "StaticBox";
 
 	/* On multi-homed hosts you may need the following. These define

@@ -86,7 +86,7 @@ libircd_dep = declare_dependency(
   dependencies: [librb_dep, ltdl_dep]
 )
 
-solanum = executable('solanum',
+comet = executable('comet',
   'main.c',
   dependencies: [libircd_dep],
   export_dynamic: true,

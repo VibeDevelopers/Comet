@@ -26,7 +26,7 @@
 #include <client.h>
 #include <msgbuf.h>
 
-static char cap_oper_desc[] = "Provides the solanum.chat/oper capability";
+static char cap_oper_desc[] = "Provides the comet.chat/oper capability";
 
 static bool cap_oper_oper_visible(struct Client *);
 static void cap_oper_outbound_msgbuf(void *);
@@ -43,7 +43,7 @@ static struct ClientCapability capdata_oper_oper = {
 };
 
 mapi_cap_list_av2 cap_oper_caps[] = {
-	{ MAPI_CAP_CLIENT, "solanum.chat/oper", NULL, &CLICAP_OPER },
+	{ MAPI_CAP_CLIENT, "comet.chat/oper", NULL, &CLICAP_OPER },
 	{ MAPI_CAP_CLIENT, "?oper_auspex", &capdata_oper_oper, &CLICAP_OPER_AUSPEX },
 	{ MAPI_CAP_CLIENT, "?oper_justoper", &capdata_oper_oper, &CLICAP_OPER_JUSTOPER },
 	{ MAPI_CAP_CLIENT, "?oper_normal", &capdata_oper_oper, &CLICAP_OPER_NORMAL },
@@ -75,12 +75,12 @@ cap_oper_outbound_msgbuf(void *data_)
 	if (IsOper(data->source))
 	{
 		/* send all oper data to auspex */
-		msgbuf_append_tag(msgbuf, "solanum.chat/oper", data->source->user->opername, CLICAP_OPER_AUSPEX);
+		msgbuf_append_tag(msgbuf, "comet.chat/oper", data->source->user->opername, CLICAP_OPER_AUSPEX);
 		if (HasPrivilege(data->source, "oper:hidden") || ConfigFileEntry.hide_opers)
 			/* these people aren't allowed to see hidden opers */
 			return;
-		msgbuf_append_tag(msgbuf, "solanum.chat/oper", data->source->user->opername, CLICAP_OPER_JUSTOPER);
-		msgbuf_append_tag(msgbuf, "solanum.chat/oper", NULL, CLICAP_OPER_NORMAL);
+		msgbuf_append_tag(msgbuf, "comet.chat/oper", data->source->user->opername, CLICAP_OPER_JUSTOPER);
+		msgbuf_append_tag(msgbuf, "comet.chat/oper", NULL, CLICAP_OPER_NORMAL);
 	}
 }
 

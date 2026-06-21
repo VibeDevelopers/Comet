@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * cap_labeled_response.c: labeled-response hooks
  *
  * Copyright (c) 2026 Ryan Schmidt <skizzerz@skizzerz.net>
@@ -37,7 +37,7 @@ static void cap_labeled_response_process(void *);
 static void cap_labeled_response_cleanup(void *);
 static void me_ack(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
-static const char *serv_response_tag = "solanum.chat/response";
+static const char *serv_response_tag = "comet.chat/response";
 static char response_tag_buf[BUFSIZE];
 
 struct Message ack_msgtab = {
@@ -148,7 +148,7 @@ cap_labeled_response_process(void *data_)
 		}
 	}
 
-	/* propagate solanum.chat/response to other servers */
+	/* propagate comet.chat/response to other servers */
 	if (response_tag != NULL)
 	{
 		msgbuf_append_tag(msgbuf, serv_response_tag, response_tag, CLICAP_SERVONLY);

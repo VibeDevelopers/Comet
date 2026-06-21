@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * tag_reply.c: implement the IRCv3 +reply client tag
  *
  * Copyright (c) 2026 Ryan Schmidt <skizzerz@skizzerz.net>

@@ -1,5 +1,5 @@
 /*
- *  Solanum: a slightly advanced ircd
+ *  Comet: a slightly advanced ircd
  *  m_omode.c: allows oper mode hacking
  *
  *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center

@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * snomask.c: Management for user server-notice masks.
  *
  * Copyright (c) 2006 Ariadne Conill <ariadne@dereferenced.org>

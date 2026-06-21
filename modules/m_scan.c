@@ -1,5 +1,5 @@
 /*
- *  Solanum: a slightly advanced ircd
+ *  Comet: a slightly advanced ircd
  *  m_scan.c: Provides information about various targets on various topics
  *
  *  Copyright (c) 2006 Ariadne Conill <ariadne -at- dereferenced.org>

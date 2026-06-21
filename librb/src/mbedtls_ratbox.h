@@ -40,7 +40,7 @@
 /*
  * Personalization string for CTR-DRBG initialization
  */
-static const char rb_mbedtls_personal_str[] = "solanum/librb personalization string";
+static const char rb_mbedtls_personal_str[] = "comet/librb personalization string";
 
 /*
  * Default list of supported ciphersuites

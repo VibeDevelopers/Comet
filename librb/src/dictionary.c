@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * rb_dictionary.c: Dictionary-based information storage.
  *
  * Copyright (c) 2007 Ariadne Conill <ariadne -at- dereferenced.org>
