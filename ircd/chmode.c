@@ -1296,6 +1296,7 @@ struct ChannelMode chmode_table[256] =
   ['t'] = {chm_simple,    MODE_TOPICLIMIT, 0 },
   ['v'] = {chm_voice,     0,               CHM_ARGS },
   ['z'] = {chm_simple,    MODE_OPMODERATE, 0 },
+  ['U'] = {chm_simple,    MODE_HIDEBANS, 0 },
 };
 
 /* *INDENT-ON* */

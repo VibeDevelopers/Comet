@@ -182,6 +182,7 @@ typedef int (*ExtbanFunc)(const char *data, struct Client *client_p,
 #define MODE_FREEINVITE 0x0800  /* allow free use of /invite */
 #define MODE_FREETARGET 0x1000  /* can be forwarded to without authorization */
 #define MODE_DISFORWARD 0x2000  /* disable channel forwarding */
+#define MODE_HIDEBANS	0x1000000 /* disallow non-chanops from seeing ban/quiet lists */
 
 #define CHFL_BAN        0x10000000	/* ban channel flag */
 #define CHFL_EXCEPTION  0x20000000	/* exception to ban channel flag */
