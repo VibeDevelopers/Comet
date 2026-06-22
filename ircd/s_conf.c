@@ -806,6 +806,7 @@ set_default_conf(void)
 	ConfigChannel.disable_local_channels = false;
 	ConfigChannel.displayed_usercount = 3;
 	ConfigChannel.opmod_send_statusmsg = false;
+	ConfigChannel.cycle_host_change = false;
 	ConfigChannel.ip_bans_through_vhost = true;
 	ConfigChannel.invite_notify_notice = true;
 

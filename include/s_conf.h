@@ -295,6 +295,7 @@ struct config_channel_entry
 	int displayed_usercount;
 	int strip_topic_colors;
 	int opmod_send_statusmsg;
+	int cycle_host_change;
 	int ip_bans_through_vhost;
 	int invite_notify_notice;
 };
