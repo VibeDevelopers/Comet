@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dev
     paths-ignore:
       - '.github/workflows/docs.yaml'
       - 'doc/oper-guide/**'

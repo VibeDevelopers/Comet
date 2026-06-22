@@ -4,7 +4,7 @@ dnl said functions need to be just about as complex as they already are.
 
 AC_PREREQ(2.60)
 
-AC_INIT([comet], [1.2-stable])
+AC_INIT([comet], [1.3-stable])
 
 AC_LANG(C)
 AC_USE_SYSTEM_EXTENSIONS
