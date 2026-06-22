@@ -1,6 +1,6 @@
 # News
 
-This is comet 1.2-dev.
+This is comet 1.2-stable.
 See LICENSE for licensing details (GPL v2).
 
 ## comet-1.0
