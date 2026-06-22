@@ -1,5 +1,5 @@
 /*
- *  comet: Advanced, scalable Internet Relay Chat.
+ *  Comet: Advanced, scalable Internet Relay Chat.
  *  s_conf.h: A header for the configuration functions.
  *
  *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
@@ -298,6 +298,7 @@ struct config_channel_entry
 	int cycle_host_change;
 	int ip_bans_through_vhost;
 	int invite_notify_notice;
+	char *autotopic;		/* Default topic set on newly created channels */
 };
 
 struct config_server_hide

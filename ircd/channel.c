@@ -233,17 +233,30 @@ find_channel_status(struct membership *msptr, int combine)
  *
  * input	- channel to add client to, client to add, channel flags
  * output	-
- * side effects - user is added to channel
+ * side effects - user is added to channel; if this is the first local client
+ *                joining a newly created channel and autotopic is configured,
+ *                the autotopic is set with topic_time == channelts to prevent
+ *                TS desyncs across servers during burst/rejoin.
  */
 void
 add_user_to_channel(struct Channel *chptr, struct Client *client_p, int flags)
 {
 	struct membership *msptr;
 	rb_dlink_node *p;
+	int is_new_channel;
 
 	s_assert(client_p->user != NULL);
 	if(client_p->user == NULL)
 		return;
+
+	/* Snapshot emptiness *before* adding the new member so we can detect
+	 * a channel being created.  Only trigger autotopic for local clients:
+	 * remote servers will burst the topic back to us themselves, and we
+	 * must not set it on their behalf or we risk diverging topic_time
+	 * values.  Using chptr->channelts (not rb_current_time()) for the
+	 * topic timestamp guarantees every server that independently creates
+	 * the same channel assigns the same topic_time, eliminating desyncs. */
+	is_new_channel = (rb_dlink_list_length(&chptr->members) == 0);
 
 	msptr = rb_bh_alloc(member_heap);
 
@@ -266,6 +279,13 @@ add_user_to_channel(struct Channel *chptr, struct Client *client_p, int flags)
 
 	if(MyClient(client_p))
 		rb_dlinkAdd(msptr, &msptr->locchannode, &chptr->locmembers);
+
+	/* Set autotopic only when a local client creates a brand-new channel.
+	 * Topic time is pinned to channelts so it is identical on every server
+	 * that happens to create the same channel at the same moment, and will
+	 * be correctly overwritten during TS-based topic resolution on burst. */
+	if(is_new_channel && MyClient(client_p) && !EmptyString(ConfigChannel.autotopic))
+		set_channel_topic(chptr, ConfigChannel.autotopic, me.name, chptr->channelts);
 }
 
 /* remove_user_from_channel()
