@@ -1,0 +1,62 @@
+#!/bin/sh
+# setup — configure, build, test, and install Comet without requiring root.
+#
+# Usage:
+#   ./setup [builddir] [extra meson options...]
+#
+# If --prefix is not supplied, defaults to ~/ircd.
+
+set -e
+
+die() { echo "ERROR: $*" >&2; exit 1; }
+
+command -v meson >/dev/null 2>&1 || die "meson not found in PATH"
+
+# First argument is the build directory; remaining args are passed to meson setup
+if [ $# -gt 0 ]; then
+    BUILDDIR="$1"
+    shift
+else
+    BUILDDIR="build"
+fi
+
+# Check whether the caller already supplied --prefix
+has_prefix=0
+if [ $# -gt 0 ]; then
+    for arg in "$@"; do
+        case "$arg" in
+            --prefix=*|-Dprefix=*) has_prefix=1 ;;
+        esac
+    done
+fi
+
+if [ "$has_prefix" -eq 0 ]; then
+    DEFAULT_PREFIX="$HOME/ircd"
+    echo "No --prefix given; defaulting to $DEFAULT_PREFIX"
+    set -- "--prefix=$DEFAULT_PREFIX" "$@"
+fi
+
+# Extract the prefix and pre-create it so the installer never encounters a
+# missing directory and falls back to polkit escalation.
+PREFIX=""
+for arg in "$@"; do
+    case "$arg" in
+        --prefix=*) PREFIX="${arg#--prefix=}" ;;
+        -Dprefix=*) PREFIX="${arg#-Dprefix=}" ;;
+    esac
+done
+if [ -n "$PREFIX" ]; then
+    mkdir -p "$PREFIX"
+fi
+
+echo "==> meson setup $BUILDDIR $*"
+meson setup "$BUILDDIR" -Doper_chghost=true "$@"
+
+echo "==> meson compile -C $BUILDDIR"
+meson compile -C "$BUILDDIR"
+
+echo "==> meson test -C $BUILDDIR"
+meson test -C "$BUILDDIR"
+
+echo "==> meson install -C $BUILDDIR"
+exec meson install -C "$BUILDDIR"
