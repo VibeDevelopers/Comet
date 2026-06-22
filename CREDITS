@@ -1,4 +1,9 @@
-Comet is based on Charybdis, which was based on ircd-ratbox.
+Comet is based on Solanum & Charybdis, which was based on ircd-ratbox.
+
+The VibeDevelopers team:
+
+SnowFields, Craig Saunders <craig@snowfields.me>
+Society, Charlotte Western <society@vibetalk.net>
 
 Development is led by a group of representatives from Libera Chat
 and OFTC:
@@ -24,5 +29,5 @@ viatsko, Valerii Iatsko <dwr -at- codingbox.io>
 A full list of contributors to Charybdis and its predecessors
 is in doc/credits-past.txt.
 
-Visit the Comet website at: https://comet.chat/
-Visit us on IRC at: irc.libera.chat #comet
+Visit the Comet website at: https://vibetalk.net/
+Visit us on IRC at: irc.vibetalk.net #comet
