@@ -39,6 +39,7 @@ extension_modules = [
   'm_identify',
   'm_mkpasswd',
   'm_ojoin',
+  'm_irccloud',
   'm_okick',
   'm_omode',
   'm_opme',
