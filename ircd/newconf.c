@@ -74,248 +74,229 @@ static char *yy_privset_extends = NULL;
 static const char *
 conf_strtype(int type)
 {
-	switch (CF_TYPE(type))
-	{
-	case CF_INT:
-		return "integer value";
-	case CF_STRING:
-		return "unquoted string";
-	case CF_YESNO:
-		return "yes/no value";
-	case CF_QSTRING:
-		return "quoted string";
-	case CF_TIME:
-		return "time/size value";
-	default:
-		return "unknown type";
-	}
+    switch (CF_TYPE(type)) {
+    case CF_INT:
+        return "integer value";
+    case CF_STRING:
+        return "unquoted string";
+    case CF_YESNO:
+        return "yes/no value";
+    case CF_QSTRING:
+        return "quoted string";
+    case CF_TIME:
+        return "time/size value";
+    default:
+        return "unknown type";
+    }
 }
 
 int
 add_top_conf(const char *name, int (*sfunc) (struct TopConf *),
-		int (*efunc) (struct TopConf *), struct ConfEntry *items)
+             int (*efunc) (struct TopConf *), struct ConfEntry *items)
 {
-	struct TopConf *tc;
+    struct TopConf *tc;
 
-	tc = rb_malloc(sizeof(struct TopConf));
+    tc = rb_malloc(sizeof(struct TopConf));
 
-	tc->tc_name = name;
-	tc->tc_sfunc = sfunc;
-	tc->tc_efunc = efunc;
-	tc->tc_entries = items;
+    tc->tc_name = name;
+    tc->tc_sfunc = sfunc;
+    tc->tc_efunc = efunc;
+    tc->tc_entries = items;
 
-	rb_dlinkAddAlloc(tc, &conf_items);
-	conf_changed = true;
-	return 0;
+    rb_dlinkAddAlloc(tc, &conf_items);
+    conf_changed = true;
+    return 0;
 }
 
 struct TopConf *
 find_top_conf(const char *name)
 {
-	rb_dlink_node *d;
-	struct TopConf *tc;
+    rb_dlink_node *d;
+    struct TopConf *tc;
 
-	RB_DLINK_FOREACH(d, conf_items.head)
-	{
-		tc = d->data;
-		if(rb_strcasecmp(tc->tc_name, name) == 0)
-			return tc;
-	}
+    RB_DLINK_FOREACH(d, conf_items.head) {
+        tc = d->data;
+        if(rb_strcasecmp(tc->tc_name, name) == 0)
+            return tc;
+    }
 
-	return NULL;
+    return NULL;
 }
 
 
 struct ConfEntry *
 find_conf_item(const struct TopConf *top, const char *name)
 {
-	struct ConfEntry *cf;
-	rb_dlink_node *d;
+    struct ConfEntry *cf;
+    rb_dlink_node *d;
 
-	if(top->tc_entries)
-	{
-		int i;
+    if(top->tc_entries) {
+        int i;
 
-		for(i = 0; top->tc_entries[i].cf_type; i++)
-		{
-			cf = &top->tc_entries[i];
+        for(i = 0; top->tc_entries[i].cf_type; i++) {
+            cf = &top->tc_entries[i];
 
-			if(!rb_strcasecmp(cf->cf_name, name))
-				return cf;
-		}
-	}
+            if(!rb_strcasecmp(cf->cf_name, name))
+                return cf;
+        }
+    }
 
-	RB_DLINK_FOREACH(d, top->tc_items.head)
-	{
-		cf = d->data;
-		if(rb_strcasecmp(cf->cf_name, name) == 0)
-			return cf;
-	}
+    RB_DLINK_FOREACH(d, top->tc_items.head) {
+        cf = d->data;
+        if(rb_strcasecmp(cf->cf_name, name) == 0)
+            return cf;
+    }
 
-	return NULL;
+    return NULL;
 }
 
 int
 remove_top_conf(char *name)
 {
-	struct TopConf *tc;
-	rb_dlink_node *ptr;
+    struct TopConf *tc;
+    rb_dlink_node *ptr;
 
-	if((tc = find_top_conf(name)) == NULL)
-		return -1;
+    if((tc = find_top_conf(name)) == NULL)
+        return -1;
 
-	if((ptr = rb_dlinkFind(tc, &conf_items)) == NULL)
-		return -1;
+    if((ptr = rb_dlinkFind(tc, &conf_items)) == NULL)
+        return -1;
 
-	rb_dlinkDestroy(ptr, &conf_items);
-	rb_free(tc);
-	conf_changed = true;
+    rb_dlinkDestroy(ptr, &conf_items);
+    rb_free(tc);
+    conf_changed = true;
 
-	return 0;
+    return 0;
 }
 
 static void
 conf_set_serverinfo_name(void *data)
 {
-	if(ServerInfo.name == NULL)
-	{
-		const char *s;
-		int dots = 0;
+    if(ServerInfo.name == NULL) {
+        const char *s;
+        int dots = 0;
 
-		for(s = data; *s != '\0'; s++)
-		{
-			if(!IsServChar(*s))
-			{
-				conf_report_error("Ignoring serverinfo::name "
-						  "-- bogus servername.");
-				return;
-			}
-			else if(*s == '.')
-				++dots;
-		}
+        for(s = data; *s != '\0'; s++) {
+            if(!IsServChar(*s)) {
+                conf_report_error("Ignoring serverinfo::name "
+                                  "-- bogus servername.");
+                return;
+            } else if(*s == '.')
+                ++dots;
+        }
 
-		if(!dots)
-		{
-			conf_report_error("Ignoring serverinfo::name -- must contain '.'");
-			return;
-		}
+        if(!dots) {
+            conf_report_error("Ignoring serverinfo::name -- must contain '.'");
+            return;
+        }
 
-		s = data;
+        s = data;
 
-		if(IsDigit(*s))
-		{
-			conf_report_error("Ignoring serverinfo::name -- cannot begin with digit.");
-			return;
-		}
+        if(IsDigit(*s)) {
+            conf_report_error("Ignoring serverinfo::name -- cannot begin with digit.");
+            return;
+        }
 
-		/* the ircd will exit() in main() if we dont set one */
-		if(strlen(s) <= HOSTLEN)
-			ServerInfo.name = rb_strdup((char *) data);
-	}
+        /* the ircd will exit() in main() if we dont set one */
+        if(strlen(s) <= HOSTLEN)
+            ServerInfo.name = rb_strdup((char *) data);
+    }
 }
 
 static void
 conf_set_serverinfo_sid(void *data)
 {
-	char *sid = data;
+    char *sid = data;
 
-	if(ServerInfo.sid[0] == '\0')
-	{
-		if(!IsDigit(sid[0]) || !IsIdChar(sid[1]) ||
-		   !IsIdChar(sid[2]) || sid[3] != '\0')
-		{
-			conf_report_error("Ignoring serverinfo::sid "
-					  "-- bogus sid.");
-			return;
-		}
+    if(ServerInfo.sid[0] == '\0') {
+        if(!IsDigit(sid[0]) || !IsIdChar(sid[1]) ||
+           !IsIdChar(sid[2]) || sid[3] != '\0') {
+            conf_report_error("Ignoring serverinfo::sid "
+                              "-- bogus sid.");
+            return;
+        }
 
-		rb_strlcpy(ServerInfo.sid, sid, sizeof(ServerInfo.sid));
-	}
+        rb_strlcpy(ServerInfo.sid, sid, sizeof(ServerInfo.sid));
+    }
 }
 
 static void
 conf_set_serverinfo_network_name(void *data)
 {
-	char *p;
+    char *p;
 
-	if((p = strchr((char *) data, ' ')))
-		*p = '\0';
+    if((p = strchr((char *) data, ' ')))
+        *p = '\0';
 
-	rb_free(ServerInfo.network_name);
-	ServerInfo.network_name = rb_strdup((char *) data);
+    rb_free(ServerInfo.network_name);
+    ServerInfo.network_name = rb_strdup((char *) data);
 }
 
 static void
 conf_set_serverinfo_vhost(void *data)
 {
-	struct rb_sockaddr_storage addr;
+    struct rb_sockaddr_storage addr;
 
-	if(rb_inet_pton_sock(data, &addr) <= 0 || GET_SS_FAMILY(&addr) != AF_INET)
-	{
-		conf_report_error("Invalid IPv4 address for server vhost (%s)", (char *) data);
-		return;
-	}
+    if(rb_inet_pton_sock(data, &addr) <= 0 || GET_SS_FAMILY(&addr) != AF_INET) {
+        conf_report_error("Invalid IPv4 address for server vhost (%s)", (char *) data);
+        return;
+    }
 
-	ServerInfo.bind4 = addr;
+    ServerInfo.bind4 = addr;
 }
 
 static void
 conf_set_serverinfo_vhost6(void *data)
 {
 
-	struct rb_sockaddr_storage addr;
+    struct rb_sockaddr_storage addr;
 
-	if(rb_inet_pton_sock(data, &addr) <= 0 || GET_SS_FAMILY(&addr) != AF_INET6)
-	{
-		conf_report_error("Invalid IPv6 address for server vhost (%s)", (char *) data);
-		return;
-	}
+    if(rb_inet_pton_sock(data, &addr) <= 0 || GET_SS_FAMILY(&addr) != AF_INET6) {
+        conf_report_error("Invalid IPv6 address for server vhost (%s)", (char *) data);
+        return;
+    }
 
-	ServerInfo.bind6 = addr;
+    ServerInfo.bind6 = addr;
 }
 
 static void
 conf_set_serverinfo_nicklen(void *data)
 {
-	ConfigFileEntry.nicklen = (*(unsigned int *) data) + 1;
+    ConfigFileEntry.nicklen = (*(unsigned int *) data) + 1;
 
-	if (ConfigFileEntry.nicklen > NICKLEN)
-	{
-		conf_report_error("Warning -- ignoring serverinfo::nicklen -- provided nicklen (%u) is greater than allowed nicklen (%u)",
-				  ConfigFileEntry.nicklen - 1, NICKLEN - 1);
-		ConfigFileEntry.nicklen = NICKLEN;
-	}
-	else if (ConfigFileEntry.nicklen < 9 + 1)
-	{
-		conf_report_error("Warning -- serverinfo::nicklen is too low (%u) -- forcing 9",
-				  ConfigFileEntry.nicklen - 1);
-		ConfigFileEntry.nicklen = 9 + 1;
-	}
+    if (ConfigFileEntry.nicklen > NICKLEN) {
+        conf_report_error("Warning -- ignoring serverinfo::nicklen -- provided nicklen (%u) is greater than allowed nicklen (%u)",
+                          ConfigFileEntry.nicklen - 1, NICKLEN - 1);
+        ConfigFileEntry.nicklen = NICKLEN;
+    } else if (ConfigFileEntry.nicklen < 9 + 1) {
+        conf_report_error("Warning -- serverinfo::nicklen is too low (%u) -- forcing 9",
+                          ConfigFileEntry.nicklen - 1);
+        ConfigFileEntry.nicklen = 9 + 1;
+    }
 }
 
 static void
 conf_set_modules_module(void *data)
 {
-	char *m_bn;
+    char *m_bn;
 
-	m_bn = rb_basename((char *) data);
+    m_bn = rb_basename((char *) data);
 
-	if(findmodule_byname(m_bn) == NULL)
-		load_one_module((char *) data, MAPI_ORIGIN_EXTENSION, false);
+    if(findmodule_byname(m_bn) == NULL)
+        load_one_module((char *) data, MAPI_ORIGIN_EXTENSION, false);
 
-	rb_free(m_bn);
+    rb_free(m_bn);
 }
 
 static void
 conf_set_modules_path(void *data)
 {
-	mod_add_path((char *) data);
+    mod_add_path((char *) data);
 }
 
-struct mode_table
-{
-	const char *name;
-	int mode;
+struct mode_table {
+    const char *name;
+    int mode;
 };
 
 /* *INDENT-OFF* */
@@ -332,6 +313,7 @@ static struct mode_table umode_table[] = {
 static struct mode_table oper_table[] = {
 	{"encrypted",		OPER_ENCRYPTED		},
 	{"need_ssl",		OPER_NEEDSSL		},
+	{"vhost_auth",		OPER_VHOSTAUTH		},
 	{NULL, 0}
 };
 
@@ -386,496 +368,464 @@ static struct mode_table cluster_table[] = {
 static int
 find_umode(struct mode_table *tab, const char *name)
 {
-	int i;
+    int i;
 
-	for (i = 0; tab[i].name; i++)
-	{
-		if(strcmp(tab[i].name, name) == 0)
-			return tab[i].mode;
-	}
+    for (i = 0; tab[i].name; i++) {
+        if(strcmp(tab[i].name, name) == 0)
+            return tab[i].mode;
+    }
 
-	return -1;
+    return -1;
 }
 
 static void
 set_modes_from_table(int *modes, const char *whatis, struct mode_table *tab, conf_parm_t * args)
 {
-	for (; args; args = args->next)
-	{
-		const char *umode;
-		int dir = 1;
-		int mode;
+    for (; args; args = args->next) {
+        const char *umode;
+        int dir = 1;
+        int mode;
 
-		if(CF_TYPE(args->type) != CF_STRING)
-		{
-			conf_report_error("Warning -- %s is not a string; ignoring.", whatis);
-			continue;
-		}
+        if(CF_TYPE(args->type) != CF_STRING) {
+            conf_report_error("Warning -- %s is not a string; ignoring.", whatis);
+            continue;
+        }
 
-		umode = args->v.string;
+        umode = args->v.string;
 
-		if(*umode == '~')
-		{
-			dir = 0;
-			umode++;
-		}
+        if(*umode == '~') {
+            dir = 0;
+            umode++;
+        }
 
-		mode = find_umode(tab, umode);
+        mode = find_umode(tab, umode);
 
-		if(mode == -1)
-		{
-			conf_report_error("Warning -- unknown %s %s.", whatis, args->v.string);
-			continue;
-		}
+        if(mode == -1) {
+            conf_report_error("Warning -- unknown %s %s.", whatis, args->v.string);
+            continue;
+        }
 
-		if(mode)
-		{
-			if(dir)
-				*modes |= mode;
-			else
-				*modes &= ~mode;
-		}
-		else
-			*modes = 0;
-	}
+        if(mode) {
+            if(dir)
+                *modes |= mode;
+            else
+                *modes &= ~mode;
+        } else
+            *modes = 0;
+    }
 }
 
 static void
 parse_umodes(const char *pm, int *values, int *mask)
 {
-	int what = MODE_ADD, flag;
+    int what = MODE_ADD, flag;
 
-	*values = 0;
+    *values = 0;
 
-	if (NULL != mask)
-		*mask = 0;
+    if (NULL != mask)
+        *mask = 0;
 
-	for (; *pm; pm++)
-	{
-		switch (*pm)
-		{
-		case '+':
-			what = MODE_ADD;
-			break;
-		case '-':
-			what = MODE_DEL;
-			break;
+    for (; *pm; pm++) {
+        switch (*pm) {
+        case '+':
+            what = MODE_ADD;
+            break;
+        case '-':
+            what = MODE_DEL;
+            break;
 
-		/* don't allow +o */
-		case 'o':
-		case 'S':
-		case 'Z':
-		case ' ':
-			break;
+        /* don't allow +o */
+        case 'o':
+        case 'S':
+        case 'Z':
+        case ' ':
+            break;
 
-		default:
-			flag = user_modes[(unsigned char) *pm];
-			if (flag)
-			{
-				/* Proper value has probably not yet been set
-				 * so don't check oper_only_umodes -- jilles */
-				if (what == MODE_ADD)
-					*values |= flag;
-				else
-					*values &= ~flag;
+        default:
+            flag = user_modes[(unsigned char) *pm];
+            if (flag) {
+                /* Proper value has probably not yet been set
+                 * so don't check oper_only_umodes -- jilles */
+                if (what == MODE_ADD)
+                    *values |= flag;
+                else
+                    *values &= ~flag;
 
-				if (NULL != mask)
-					*mask |= flag;
-			}
-			break;
-		}
-	}
+                if (NULL != mask)
+                    *mask |= flag;
+            }
+            break;
+        }
+    }
 }
 
 static void
 conf_set_privset_extends(void *data)
 {
-	yy_privset_extends = rb_strdup((char *) data);
+    yy_privset_extends = rb_strdup((char *) data);
 }
 
 static void
 conf_set_privset_privs(void *data)
 {
-	char *privs = NULL;
-	conf_parm_t *args = data;
+    char *privs = NULL;
+    conf_parm_t *args = data;
 
-	for (; args; args = args->next)
-	{
-		if (privs == NULL)
-			privs = rb_strdup(args->v.string);
-		else
-		{
-			char *privs_old = privs;
+    for (; args; args = args->next) {
+        if (privs == NULL)
+            privs = rb_strdup(args->v.string);
+        else {
+            char *privs_old = privs;
 
-			privs = rb_malloc(strlen(privs_old) + 1 + strlen(args->v.string) + 1);
-			strcpy(privs, privs_old);
-			strcat(privs, " ");
-			strcat(privs, args->v.string);
+            privs = rb_malloc(strlen(privs_old) + 1 + strlen(args->v.string) + 1);
+            strcpy(privs, privs_old);
+            strcat(privs, " ");
+            strcat(privs, args->v.string);
 
-			rb_free(privs_old);
-		}
-	}
+            rb_free(privs_old);
+        }
+    }
 
-	if (privs)
-	{
-		if (yy_privset_extends)
-		{
-			struct PrivilegeSet *set = privilegeset_get(yy_privset_extends);
+    if (privs) {
+        if (yy_privset_extends) {
+            struct PrivilegeSet *set = privilegeset_get(yy_privset_extends);
 
-			if (!set)
-			{
-				conf_report_error("Warning -- unknown parent privilege set %s for %s; assuming defaults", yy_privset_extends, conf_cur_block_name);
+            if (!set) {
+                conf_report_error("Warning -- unknown parent privilege set %s for %s; assuming defaults", yy_privset_extends, conf_cur_block_name);
 
-				set = privilegeset_get("default");
-			}
+                set = privilegeset_get("default");
+            }
 
-			privilegeset_extend(set, conf_cur_block_name != NULL ? conf_cur_block_name : "<unknown>", privs, 0);
+            privilegeset_extend(set, conf_cur_block_name != NULL ? conf_cur_block_name : "<unknown>", privs, 0);
 
-			rb_free(yy_privset_extends);
-			yy_privset_extends = NULL;
-		}
-		else
-			privilegeset_set_new(conf_cur_block_name != NULL ? conf_cur_block_name : "<unknown>", privs, 0);
+            rb_free(yy_privset_extends);
+            yy_privset_extends = NULL;
+        } else
+            privilegeset_set_new(conf_cur_block_name != NULL ? conf_cur_block_name : "<unknown>", privs, 0);
 
-		rb_free(privs);
-	}
+        rb_free(privs);
+    }
 }
 
 static int
 conf_begin_oper(struct TopConf *tc)
 {
-	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
+    rb_dlink_node *ptr;
+    rb_dlink_node *next_ptr;
 
-	if(yy_oper != NULL)
-	{
-		free_oper_conf(yy_oper);
-		yy_oper = NULL;
-	}
+    if(yy_oper != NULL) {
+        free_oper_conf(yy_oper);
+        yy_oper = NULL;
+    }
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_oper_list.head)
-	{
-		free_oper_conf(ptr->data);
-		rb_dlinkDestroy(ptr, &yy_oper_list);
-	}
+    RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_oper_list.head) {
+        free_oper_conf(ptr->data);
+        rb_dlinkDestroy(ptr, &yy_oper_list);
+    }
 
-	yy_oper = make_oper_conf();
-	yy_oper->flags |= OPER_ENCRYPTED;
+    yy_oper = make_oper_conf();
+    yy_oper->flags |= OPER_ENCRYPTED;
 
-	return 0;
+    return 0;
 }
 
 static int
 conf_end_oper(struct TopConf *tc)
 {
-	struct oper_conf *yy_tmpoper;
-	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
+    struct oper_conf *yy_tmpoper;
+    rb_dlink_node *ptr;
+    rb_dlink_node *next_ptr;
 
-	if(conf_cur_block_name != NULL)
-	{
-		if(strlen(conf_cur_block_name) > OPERNICKLEN)
-			conf_cur_block_name[OPERNICKLEN] = '\0';
+    if(conf_cur_block_name != NULL) {
+        if(strlen(conf_cur_block_name) > OPERNICKLEN)
+            conf_cur_block_name[OPERNICKLEN] = '\0';
 
-		yy_oper->name = rb_strdup(conf_cur_block_name);
-	}
+        yy_oper->name = rb_strdup(conf_cur_block_name);
+    }
 
-	if(EmptyString(yy_oper->name))
-	{
-		conf_report_error("Ignoring operator block -- missing name.");
-		return 0;
-	}
+    if(EmptyString(yy_oper->name)) {
+        conf_report_error("Ignoring operator block -- missing name.");
+        return 0;
+    }
 
 #ifdef HAVE_OPENSSL
-	if(EmptyString(yy_oper->passwd) && EmptyString(yy_oper->rsa_pubkey_file))
+    if(EmptyString(yy_oper->passwd) && EmptyString(yy_oper->rsa_pubkey_file))
 #else
-	if(EmptyString(yy_oper->passwd))
+    if(EmptyString(yy_oper->passwd))
 #endif
-	{
-		conf_report_error("Ignoring operator block for %s -- missing password",
-					yy_oper->name);
-		return 0;
-	}
+    {
+        conf_report_error("Ignoring operator block for %s -- missing password",
+                          yy_oper->name);
+        return 0;
+    }
 
 
-	if (!yy_oper->privset)
-		yy_oper->privset = privilegeset_get("default");
+    if (!yy_oper->privset)
+        yy_oper->privset = privilegeset_get("default");
 
-	/* now, yy_oper_list contains a stack of oper_conf's with just user
-	 * and host in, yy_oper contains the rest of the information which
-	 * we need to copy into each element in yy_oper_list
-	 */
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_oper_list.head)
-	{
-		yy_tmpoper = ptr->data;
+    /* now, yy_oper_list contains a stack of oper_conf's with just user
+     * and host in, yy_oper contains the rest of the information which
+     * we need to copy into each element in yy_oper_list
+     */
+    RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_oper_list.head) {
+        yy_tmpoper = ptr->data;
 
-		yy_tmpoper->name = rb_strdup(yy_oper->name);
+        yy_tmpoper->name = rb_strdup(yy_oper->name);
 
-		/* could be an rsa key instead.. */
-		if(!EmptyString(yy_oper->passwd))
-			yy_tmpoper->passwd = rb_strdup(yy_oper->passwd);
+        /* could be an rsa key instead.. */
+        if(!EmptyString(yy_oper->passwd))
+            yy_tmpoper->passwd = rb_strdup(yy_oper->passwd);
 
-		yy_tmpoper->flags = yy_oper->flags;
-		yy_tmpoper->umodes = yy_oper->umodes;
-		yy_tmpoper->snomask = yy_oper->snomask;
-		yy_tmpoper->privset = yy_oper->privset;
+        yy_tmpoper->flags = yy_oper->flags;
+        yy_tmpoper->umodes = yy_oper->umodes;
+        yy_tmpoper->snomask = yy_oper->snomask;
+        yy_tmpoper->privset = yy_oper->privset;
 
 #ifdef HAVE_OPENSSL
-		if(yy_oper->rsa_pubkey_file)
-		{
-			BIO *file;
+        if(yy_oper->rsa_pubkey_file) {
+            BIO *file;
 
-			if((file = BIO_new_file(yy_oper->rsa_pubkey_file, "r")) == NULL)
-			{
-				conf_report_error("Ignoring operator block for %s -- "
-						"rsa_public_key_file cant be opened",
-						yy_tmpoper->name);
-				return 0;
-			}
+            if((file = BIO_new_file(yy_oper->rsa_pubkey_file, "r")) == NULL) {
+                conf_report_error("Ignoring operator block for %s -- "
+                                  "rsa_public_key_file cant be opened",
+                                  yy_tmpoper->name);
+                return 0;
+            }
 
 #if (OPENSSL_VERSION_NUMBER >= 0x30000000L)
-			OSSL_DECODER_CTX *const ctx = OSSL_DECODER_CTX_new_for_pkey(
-				&yy_tmpoper->rsa_pubkey, "PEM", NULL, "RSA",
-				OSSL_KEYMGMT_SELECT_PUBLIC_KEY, NULL, NULL);
+            OSSL_DECODER_CTX *const ctx = OSSL_DECODER_CTX_new_for_pkey(
+                                              &yy_tmpoper->rsa_pubkey, "PEM", NULL, "RSA",
+                                              OSSL_KEYMGMT_SELECT_PUBLIC_KEY, NULL, NULL);
 
-			if(ctx != NULL)
-			{
-				if(OSSL_DECODER_CTX_get_num_decoders(ctx) < 1 ||
-				   OSSL_DECODER_from_bio(ctx, file) < 1)
-				{
-					EVP_PKEY_free(yy_tmpoper->rsa_pubkey);
-					yy_tmpoper->rsa_pubkey = NULL;
-				}
+            if(ctx != NULL) {
+                if(OSSL_DECODER_CTX_get_num_decoders(ctx) < 1 ||
+                   OSSL_DECODER_from_bio(ctx, file) < 1) {
+                    EVP_PKEY_free(yy_tmpoper->rsa_pubkey);
+                    yy_tmpoper->rsa_pubkey = NULL;
+                }
 
-				OSSL_DECODER_CTX_free(ctx);
-			}
+                OSSL_DECODER_CTX_free(ctx);
+            }
 #else
-			yy_tmpoper->rsa_pubkey =
-				(RSA *) PEM_read_bio_RSA_PUBKEY(file, NULL, 0, NULL);
+            yy_tmpoper->rsa_pubkey =
+                (RSA *) PEM_read_bio_RSA_PUBKEY(file, NULL, 0, NULL);
 #endif
 
-			(void)BIO_set_close(file, BIO_CLOSE);
-			BIO_free(file);
+            (void)BIO_set_close(file, BIO_CLOSE);
+            BIO_free(file);
 
-			if(yy_tmpoper->rsa_pubkey == NULL)
-			{
-				conf_report_error("Ignoring operator block for %s -- "
-						"rsa_public_key_file key invalid; check syntax",
-						yy_tmpoper->name);
-				return 0;
-			}
-		}
+            if(yy_tmpoper->rsa_pubkey == NULL) {
+                conf_report_error("Ignoring operator block for %s -- "
+                                  "rsa_public_key_file key invalid; check syntax",
+                                  yy_tmpoper->name);
+                return 0;
+            }
+        }
 
-		if(!EmptyString(yy_oper->certfp))
-			yy_tmpoper->certfp = rb_strdup(yy_oper->certfp);
+        if(!EmptyString(yy_oper->certfp))
+            yy_tmpoper->certfp = rb_strdup(yy_oper->certfp);
 #endif
 
-		/* all is ok, put it on oper_conf_list */
-		rb_dlinkMoveNode(ptr, &yy_oper_list, &oper_conf_list);
-	}
+        /* all is ok, put it on oper_conf_list */
+        rb_dlinkMoveNode(ptr, &yy_oper_list, &oper_conf_list);
+    }
 
-	free_oper_conf(yy_oper);
-	yy_oper = NULL;
+    free_oper_conf(yy_oper);
+    yy_oper = NULL;
 
-	return 0;
+    return 0;
 }
 
 static void
 conf_set_oper_flags(void *data)
 {
-	conf_parm_t *args = data;
+    conf_parm_t *args = data;
 
-	set_modes_from_table(&yy_oper->flags, "flag", oper_table, args);
+    set_modes_from_table(&yy_oper->flags, "flag", oper_table, args);
 }
 
 static void
 conf_set_oper_fingerprint(void *data)
 {
-	if (yy_oper->certfp)
-		rb_free(yy_oper->certfp);
-	yy_oper->certfp = rb_strdup((char *) data);
+    if (yy_oper->certfp)
+        rb_free(yy_oper->certfp);
+    yy_oper->certfp = rb_strdup((char *) data);
 }
 
 static void
 conf_set_oper_privset(void *data)
 {
-	yy_oper->privset = privilegeset_get((char *) data);
+    yy_oper->privset = privilegeset_get((char *) data);
 }
 
 static void
 conf_set_oper_user(void *data)
 {
-	struct oper_conf *yy_tmpoper;
-	char *p;
-	char *host = (char *) data;
+    struct oper_conf *yy_tmpoper;
+    char *p;
+    char *host = (char *) data;
 
-	yy_tmpoper = make_oper_conf();
+    yy_tmpoper = make_oper_conf();
 
-	if((p = strchr(host, '@')))
-	{
-		*p++ = '\0';
+    if((p = strchr(host, '@'))) {
+        *p++ = '\0';
 
-		yy_tmpoper->username = rb_strdup(host);
-		yy_tmpoper->host = rb_strdup(p);
-	}
-	else
-	{
+        yy_tmpoper->username = rb_strdup(host);
+        yy_tmpoper->host = rb_strdup(p);
+    } else {
 
-		yy_tmpoper->username = rb_strdup("*");
-		yy_tmpoper->host = rb_strdup(host);
-	}
+        yy_tmpoper->username = rb_strdup("*");
+        yy_tmpoper->host = rb_strdup(host);
+    }
 
-	if(EmptyString(yy_tmpoper->username) || EmptyString(yy_tmpoper->host))
-	{
-		conf_report_error("Ignoring user -- missing username/host");
-		free_oper_conf(yy_tmpoper);
-		return;
-	}
+    if(EmptyString(yy_tmpoper->username) || EmptyString(yy_tmpoper->host)) {
+        conf_report_error("Ignoring user -- missing username/host");
+        free_oper_conf(yy_tmpoper);
+        return;
+    }
 
-	rb_dlinkAddAlloc(yy_tmpoper, &yy_oper_list);
+    rb_dlinkAddAlloc(yy_tmpoper, &yy_oper_list);
 }
 
 static void
 conf_set_oper_password(void *data)
 {
-	if(yy_oper->passwd)
-	{
-		memset(yy_oper->passwd, 0, strlen(yy_oper->passwd));
-		rb_free(yy_oper->passwd);
-	}
+    if(yy_oper->passwd) {
+        memset(yy_oper->passwd, 0, strlen(yy_oper->passwd));
+        rb_free(yy_oper->passwd);
+    }
 
-	yy_oper->passwd = rb_strdup((char *) data);
+    yy_oper->passwd = rb_strdup((char *) data);
 }
 
 static void
 conf_set_oper_rsa_public_key_file(void *data)
 {
 #ifdef HAVE_OPENSSL
-	rb_free(yy_oper->rsa_pubkey_file);
-	yy_oper->rsa_pubkey_file = rb_strdup((char *) data);
+    rb_free(yy_oper->rsa_pubkey_file);
+    yy_oper->rsa_pubkey_file = rb_strdup((char *) data);
 #else
-	conf_report_error("Warning -- ignoring rsa_public_key_file (OpenSSL support not available");
+    conf_report_error("Warning -- ignoring rsa_public_key_file (OpenSSL support not available");
 #endif
 }
 
 static void
 conf_set_oper_umodes(void *data)
 {
-	set_modes_from_table(&yy_oper->umodes, "umode", umode_table, data);
+    set_modes_from_table(&yy_oper->umodes, "umode", umode_table, data);
 }
 
 static void
 conf_set_oper_snomask(void *data)
 {
-	yy_oper->snomask = parse_snobuf_to_mask(0, (const char *) data);
+    yy_oper->snomask = parse_snobuf_to_mask(0, (const char *) data);
 }
 
 static int
 conf_begin_class(struct TopConf *tc)
 {
-	if(yy_class)
-		free_class(yy_class);
+    if(yy_class)
+        free_class(yy_class);
 
-	yy_class = make_class();
-	return 0;
+    yy_class = make_class();
+    return 0;
 }
 
 static int
 conf_end_class(struct TopConf *tc)
 {
-	if(conf_cur_block_name != NULL)
-		yy_class->class_name = rb_strdup(conf_cur_block_name);
+    if(conf_cur_block_name != NULL)
+        yy_class->class_name = rb_strdup(conf_cur_block_name);
 
-	if(EmptyString(yy_class->class_name))
-	{
-		conf_report_error("Ignoring class block -- missing name.");
-		return 0;
-	}
+    if(EmptyString(yy_class->class_name)) {
+        conf_report_error("Ignoring class block -- missing name.");
+        return 0;
+    }
 
-	add_class(yy_class);
-	yy_class = NULL;
-	return 0;
+    add_class(yy_class);
+    yy_class = NULL;
+    return 0;
 }
 
 static void
 conf_set_class_ping_time(void *data)
 {
-	yy_class->ping_freq = *(unsigned int *) data;
+    yy_class->ping_freq = *(unsigned int *) data;
 }
 
 static void
 conf_set_class_cidr_ipv4_bitlen(void *data)
 {
-	unsigned int maxsize = 32;
-	if(*(unsigned int *) data > maxsize)
-		conf_report_error
-			("class::cidr_ipv4_bitlen argument exceeds maxsize (%d > %d) - ignoring.",
-			 *(unsigned int *) data, maxsize);
-	else
-		yy_class->cidr_ipv4_bitlen = *(unsigned int *) data;
+    unsigned int maxsize = 32;
+    if(*(unsigned int *) data > maxsize)
+        conf_report_error
+        ("class::cidr_ipv4_bitlen argument exceeds maxsize (%d > %d) - ignoring.",
+         *(unsigned int *) data, maxsize);
+    else
+        yy_class->cidr_ipv4_bitlen = *(unsigned int *) data;
 
 }
 
 static void
 conf_set_class_cidr_ipv6_bitlen(void *data)
 {
-	unsigned int maxsize = 128;
-	if(*(unsigned int *) data > maxsize)
-		conf_report_error
-			("class::cidr_ipv6_bitlen argument exceeds maxsize (%d > %d) - ignoring.",
-			 *(unsigned int *) data, maxsize);
-	else
-		yy_class->cidr_ipv6_bitlen = *(unsigned int *) data;
+    unsigned int maxsize = 128;
+    if(*(unsigned int *) data > maxsize)
+        conf_report_error
+        ("class::cidr_ipv6_bitlen argument exceeds maxsize (%d > %d) - ignoring.",
+         *(unsigned int *) data, maxsize);
+    else
+        yy_class->cidr_ipv6_bitlen = *(unsigned int *) data;
 
 }
 
 static void
 conf_set_class_number_per_cidr(void *data)
 {
-	yy_class->cidr_amount = *(unsigned int *) data;
+    yy_class->cidr_amount = *(unsigned int *) data;
 }
 
 static void
 conf_set_class_number_per_ip(void *data)
 {
-	yy_class->max_local = *(unsigned int *) data;
+    yy_class->max_local = *(unsigned int *) data;
 }
 
 
 static void
 conf_set_class_number_per_ip_global(void *data)
 {
-	yy_class->max_global = *(unsigned int *) data;
+    yy_class->max_global = *(unsigned int *) data;
 }
 
 static void
 conf_set_class_number_per_ident(void *data)
 {
-	yy_class->max_ident = *(unsigned int *) data;
+    yy_class->max_ident = *(unsigned int *) data;
 }
 
 static void
 conf_set_class_connectfreq(void *data)
 {
-	yy_class->con_freq = *(unsigned int *) data;
+    yy_class->con_freq = *(unsigned int *) data;
 }
 
 static void
 conf_set_class_max_number(void *data)
 {
-	yy_class->max_total = *(unsigned int *) data;
+    yy_class->max_total = *(unsigned int *) data;
 }
 
 static void
 conf_set_class_max_autoconn(void *data)
 {
-	yy_class->max_autoconn = *(unsigned int *) data;
+    yy_class->max_autoconn = *(unsigned int *) data;
 }
 
 static void
 conf_set_class_sendq(void *data)
 {
-	yy_class->max_sendq = *(unsigned int *) data;
+    yy_class->max_sendq = *(unsigned int *) data;
 }
 
 static char *listener_address[2];
@@ -883,991 +833,919 @@ static char *listener_address[2];
 static int
 conf_begin_listen(struct TopConf *tc)
 {
-	for (int i = 0; i < ARRAY_SIZE(listener_address); i++) {
-		rb_free(listener_address[i]);
-		listener_address[i] = NULL;
-	}
-	yy_defer_accept = 0;
-	return 0;
+    for (int i = 0; i < ARRAY_SIZE(listener_address); i++) {
+        rb_free(listener_address[i]);
+        listener_address[i] = NULL;
+    }
+    yy_defer_accept = 0;
+    return 0;
 }
 
 static int
 conf_end_listen(struct TopConf *tc)
 {
-	for (int i = 0; i < ARRAY_SIZE(listener_address); i++) {
-		rb_free(listener_address[i]);
-		listener_address[i] = NULL;
-	}
-	yy_defer_accept = 0;
-	return 0;
+    for (int i = 0; i < ARRAY_SIZE(listener_address); i++) {
+        rb_free(listener_address[i]);
+        listener_address[i] = NULL;
+    }
+    yy_defer_accept = 0;
+    return 0;
 }
 
 static void
 conf_set_listen_defer_accept(void *data)
 {
-	yy_defer_accept = *(unsigned int *) data;
+    yy_defer_accept = *(unsigned int *) data;
 }
 
 static void
 conf_set_listen_port_both(void *data, int ssl, int sctp)
 {
-	conf_parm_t *args = data;
-	for (; args; args = args->next)
-	{
-		if(CF_TYPE(args->type) != CF_INT)
-		{
-			conf_report_error("listener::port argument is not an integer -- ignoring.");
-			continue;
-		}
-                if(listener_address[0] == NULL)
-                {
-			if (sctp) {
-				conf_report_error("listener::sctp_port has no addresses -- ignoring.");
-			} else {
-				add_tcp_listener(args->v.number, NULL, AF_INET, ssl, ssl || yy_defer_accept);
-				add_tcp_listener(args->v.number, NULL, AF_INET6, ssl, ssl || yy_defer_accept);
-			}
-                }
-		else
-                {
-			int family;
-			if(strchr(listener_address[0], ':') != NULL)
-				family = AF_INET6;
-			else
-				family = AF_INET;
+    conf_parm_t *args = data;
+    for (; args; args = args->next) {
+        if(CF_TYPE(args->type) != CF_INT) {
+            conf_report_error("listener::port argument is not an integer -- ignoring.");
+            continue;
+        }
+        if(listener_address[0] == NULL) {
+            if (sctp) {
+                conf_report_error("listener::sctp_port has no addresses -- ignoring.");
+            } else {
+                add_tcp_listener(args->v.number, NULL, AF_INET, ssl, ssl || yy_defer_accept);
+                add_tcp_listener(args->v.number, NULL, AF_INET6, ssl, ssl || yy_defer_accept);
+            }
+        } else {
+            int family;
+            if(strchr(listener_address[0], ':') != NULL)
+                family = AF_INET6;
+            else
+                family = AF_INET;
 
-			if (sctp) {
+            if (sctp) {
 #ifdef HAVE_LIBSCTP
-				add_sctp_listener(args->v.number, listener_address[0], listener_address[1], ssl);
+                add_sctp_listener(args->v.number, listener_address[0], listener_address[1], ssl);
 #else
-				conf_report_error("Warning -- ignoring listener::sctp_port -- SCTP support not available.");
+                conf_report_error("Warning -- ignoring listener::sctp_port -- SCTP support not available.");
 #endif
-			} else {
-				add_tcp_listener(args->v.number, listener_address[0], family, ssl, ssl || yy_defer_accept);
-			}
-                }
-	}
+            } else {
+                add_tcp_listener(args->v.number, listener_address[0], family, ssl, ssl || yy_defer_accept);
+            }
+        }
+    }
 }
 
 static void
 conf_set_listen_port(void *data)
 {
-	conf_set_listen_port_both(data, 0, 0);
+    conf_set_listen_port_both(data, 0, 0);
 }
 
 static void
 conf_set_listen_sslport(void *data)
 {
-	conf_set_listen_port_both(data, 1, 0 );
+    conf_set_listen_port_both(data, 1, 0 );
 }
 
 static void
 conf_set_listen_sctp_port(void *data)
 {
-	conf_set_listen_port_both(data, 0, 1);
+    conf_set_listen_port_both(data, 0, 1);
 }
 
 static void
 conf_set_listen_sctp_sslport(void *data)
 {
-	conf_set_listen_port_both(data, 1, 1);
+    conf_set_listen_port_both(data, 1, 1);
 }
 
 static void
 conf_set_listen_address(void *data)
 {
-	rb_free(listener_address[1]);
-	listener_address[1] = listener_address[0];
-	listener_address[0] = rb_strdup(data);
+    rb_free(listener_address[1]);
+    listener_address[1] = listener_address[0];
+    listener_address[0] = rb_strdup(data);
 }
 
 static int
 conf_begin_auth(struct TopConf *tc)
 {
-	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
+    rb_dlink_node *ptr;
+    rb_dlink_node *next_ptr;
 
-	if(yy_aconf)
-		free_conf(yy_aconf);
+    if(yy_aconf)
+        free_conf(yy_aconf);
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_aconf_list.head)
-	{
-		free_conf(ptr->data);
-		rb_dlinkDestroy(ptr, &yy_aconf_list);
-	}
+    RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_aconf_list.head) {
+        free_conf(ptr->data);
+        rb_dlinkDestroy(ptr, &yy_aconf_list);
+    }
 
-	yy_aconf = make_conf();
-	yy_aconf->status = CONF_CLIENT;
+    yy_aconf = make_conf();
+    yy_aconf->status = CONF_CLIENT;
 
-	return 0;
+    return 0;
 }
 
 static int
 conf_end_auth(struct TopConf *tc)
 {
-	struct ConfItem *yy_tmp, *found_conf;
-	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
+    struct ConfItem *yy_tmp, *found_conf;
+    rb_dlink_node *ptr;
+    rb_dlink_node *next_ptr;
 
-	if(EmptyString(yy_aconf->info.name))
-		yy_aconf->info.name = rb_strdup("NOMATCH");
+    if(EmptyString(yy_aconf->info.name))
+        yy_aconf->info.name = rb_strdup("NOMATCH");
 
-	/* didnt even get one ->host? */
-	if(EmptyString(yy_aconf->host))
-	{
-		conf_report_error("Ignoring auth block -- missing user@host");
-		return 0;
-	}
+    /* didnt even get one ->host? */
+    if(EmptyString(yy_aconf->host)) {
+        conf_report_error("Ignoring auth block -- missing user@host");
+        return 0;
+    }
 
-	/* so the stacking works in order.. */
-	collapse(yy_aconf->user);
-	collapse(yy_aconf->host);
-	conf_add_class_to_conf(yy_aconf);
-	if ((found_conf = find_exact_conf_by_address("*", CONF_CLIENT, "*")) && found_conf->spasswd == NULL)
-		conf_report_error("Ignoring redundant auth block (after *@*)");
-	else if ((found_conf = find_exact_conf_by_address(yy_aconf->host, CONF_CLIENT, yy_aconf->user)) &&
-			(!found_conf->spasswd || (yy_aconf->spasswd &&
-			    0 == irccmp(found_conf->spasswd, yy_aconf->spasswd))))
-		conf_report_error("Ignoring duplicate auth block for %s@%s",
-				yy_aconf->user, yy_aconf->host);
-	else
-		add_conf_by_address(yy_aconf->host, CONF_CLIENT, yy_aconf->user, yy_aconf->spasswd, yy_aconf);
+    /* so the stacking works in order.. */
+    collapse(yy_aconf->user);
+    collapse(yy_aconf->host);
+    conf_add_class_to_conf(yy_aconf);
+    if ((found_conf = find_exact_conf_by_address("*", CONF_CLIENT, "*")) && found_conf->spasswd == NULL)
+        conf_report_error("Ignoring redundant auth block (after *@*)");
+    else if ((found_conf = find_exact_conf_by_address(yy_aconf->host, CONF_CLIENT, yy_aconf->user)) &&
+             (!found_conf->spasswd || (yy_aconf->spasswd &&
+                                       0 == irccmp(found_conf->spasswd, yy_aconf->spasswd))))
+        conf_report_error("Ignoring duplicate auth block for %s@%s",
+                          yy_aconf->user, yy_aconf->host);
+    else
+        add_conf_by_address(yy_aconf->host, CONF_CLIENT, yy_aconf->user, yy_aconf->spasswd, yy_aconf);
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_aconf_list.head)
-	{
-		yy_tmp = ptr->data;
+    RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_aconf_list.head) {
+        yy_tmp = ptr->data;
 
-		if(yy_aconf->passwd)
-			yy_tmp->passwd = rb_strdup(yy_aconf->passwd);
+        if(yy_aconf->passwd)
+            yy_tmp->passwd = rb_strdup(yy_aconf->passwd);
 
-		if(yy_aconf->spasswd)
-			yy_tmp->spasswd = rb_strdup(yy_aconf->spasswd);
+        if(yy_aconf->spasswd)
+            yy_tmp->spasswd = rb_strdup(yy_aconf->spasswd);
 
-		/* this will always exist.. */
-		yy_tmp->info.name = rb_strdup(yy_aconf->info.name);
+        /* this will always exist.. */
+        yy_tmp->info.name = rb_strdup(yy_aconf->info.name);
 
-		if(yy_aconf->className)
-			yy_tmp->className = rb_strdup(yy_aconf->className);
+        if(yy_aconf->className)
+            yy_tmp->className = rb_strdup(yy_aconf->className);
 
-		if(yy_aconf->desc)
-			yy_tmp->desc = rb_strdup(yy_aconf->desc);
+        if(yy_aconf->desc)
+            yy_tmp->desc = rb_strdup(yy_aconf->desc);
 
-		yy_tmp->flags = yy_aconf->flags;
-		yy_tmp->port = yy_aconf->port;
+        yy_tmp->flags = yy_aconf->flags;
+        yy_tmp->port = yy_aconf->port;
 
-		collapse(yy_tmp->user);
-		collapse(yy_tmp->host);
+        collapse(yy_tmp->user);
+        collapse(yy_tmp->host);
 
-		conf_add_class_to_conf(yy_tmp);
+        conf_add_class_to_conf(yy_tmp);
 
-		if ((found_conf = find_exact_conf_by_address("*", CONF_CLIENT, "*")) && found_conf->spasswd == NULL)
-			conf_report_error("Ignoring redundant auth block (after *@*)");
-		else if ((found_conf = find_exact_conf_by_address(yy_tmp->host, CONF_CLIENT, yy_tmp->user)) &&
-				(!found_conf->spasswd || (yy_tmp->spasswd &&
-				    0 == irccmp(found_conf->spasswd, yy_tmp->spasswd))))
-			conf_report_error("Ignoring duplicate auth block for %s@%s",
-					yy_tmp->user, yy_tmp->host);
-		else
-			add_conf_by_address(yy_tmp->host, CONF_CLIENT, yy_tmp->user, yy_tmp->spasswd, yy_tmp);
-		rb_dlinkDestroy(ptr, &yy_aconf_list);
-	}
+        if ((found_conf = find_exact_conf_by_address("*", CONF_CLIENT, "*")) && found_conf->spasswd == NULL)
+            conf_report_error("Ignoring redundant auth block (after *@*)");
+        else if ((found_conf = find_exact_conf_by_address(yy_tmp->host, CONF_CLIENT, yy_tmp->user)) &&
+                 (!found_conf->spasswd || (yy_tmp->spasswd &&
+                                           0 == irccmp(found_conf->spasswd, yy_tmp->spasswd))))
+            conf_report_error("Ignoring duplicate auth block for %s@%s",
+                              yy_tmp->user, yy_tmp->host);
+        else
+            add_conf_by_address(yy_tmp->host, CONF_CLIENT, yy_tmp->user, yy_tmp->spasswd, yy_tmp);
+        rb_dlinkDestroy(ptr, &yy_aconf_list);
+    }
 
-	yy_aconf = NULL;
-	return 0;
+    yy_aconf = NULL;
+    return 0;
 }
 
 static void
 conf_set_auth_user(void *data)
 {
-	struct ConfItem *yy_tmp;
-	char *p;
+    struct ConfItem *yy_tmp;
+    char *p;
 
-	/* The first user= line doesn't allocate a new conf */
-	if(!EmptyString(yy_aconf->host))
-	{
-		yy_tmp = make_conf();
-		yy_tmp->status = CONF_CLIENT;
-	}
-	else
-		yy_tmp = yy_aconf;
+    /* The first user= line doesn't allocate a new conf */
+    if(!EmptyString(yy_aconf->host)) {
+        yy_tmp = make_conf();
+        yy_tmp->status = CONF_CLIENT;
+    } else
+        yy_tmp = yy_aconf;
 
-	if((p = strchr(data, '@')))
-	{
-		*p++ = '\0';
+    if((p = strchr(data, '@'))) {
+        *p++ = '\0';
 
-		yy_tmp->user = rb_strdup(data);
-		yy_tmp->host = rb_strdup(p);
-	}
-	else
-	{
-		yy_tmp->user = rb_strdup("*");
-		yy_tmp->host = rb_strdup(data);
-	}
+        yy_tmp->user = rb_strdup(data);
+        yy_tmp->host = rb_strdup(p);
+    } else {
+        yy_tmp->user = rb_strdup("*");
+        yy_tmp->host = rb_strdup(data);
+    }
 
-	if(yy_aconf != yy_tmp)
-		rb_dlinkAddAlloc(yy_tmp, &yy_aconf_list);
+    if(yy_aconf != yy_tmp)
+        rb_dlinkAddAlloc(yy_tmp, &yy_aconf_list);
 }
 
 static void
 conf_set_auth_auth_user(void *data)
 {
-	if(yy_aconf->spasswd)
-		memset(yy_aconf->spasswd, 0, strlen(yy_aconf->spasswd));
-	rb_free(yy_aconf->spasswd);
-	yy_aconf->spasswd = rb_strdup(data);
+    if(yy_aconf->spasswd)
+        memset(yy_aconf->spasswd, 0, strlen(yy_aconf->spasswd));
+    rb_free(yy_aconf->spasswd);
+    yy_aconf->spasswd = rb_strdup(data);
 }
 
 static void
 conf_set_auth_passwd(void *data)
 {
-	if(yy_aconf->passwd)
-		memset(yy_aconf->passwd, 0, strlen(yy_aconf->passwd));
-	rb_free(yy_aconf->passwd);
-	yy_aconf->passwd = rb_strdup(data);
+    if(yy_aconf->passwd)
+        memset(yy_aconf->passwd, 0, strlen(yy_aconf->passwd));
+    rb_free(yy_aconf->passwd);
+    yy_aconf->passwd = rb_strdup(data);
 }
 
 static void
 conf_set_auth_spoof(void *data)
 {
-	char *p;
-	char *user = NULL;
-	char *host = NULL;
+    char *p;
+    char *user = NULL;
+    char *host = NULL;
 
-	host = data;
+    host = data;
 
-	/* user@host spoof */
-	if((p = strchr(host, '@')) != NULL)
-	{
-		*p = '\0';
-		user = data;
-		host = p+1;
+    /* user@host spoof */
+    if((p = strchr(host, '@')) != NULL) {
+        *p = '\0';
+        user = data;
+        host = p+1;
 
-		if(EmptyString(user))
-		{
-			conf_report_error("Warning -- spoof ident empty.");
-			return;
-		}
+        if(EmptyString(user)) {
+            conf_report_error("Warning -- spoof ident empty.");
+            return;
+        }
 
-		if(strlen(user) > USERLEN)
-		{
-			conf_report_error("Warning -- spoof ident length invalid.");
-			return;
-		}
+        if(strlen(user) > USERLEN) {
+            conf_report_error("Warning -- spoof ident length invalid.");
+            return;
+        }
 
-		if(!valid_username(user))
-		{
-			conf_report_error("Warning -- invalid spoof (ident).");
-			return;
-		}
+        if(!valid_username(user)) {
+            conf_report_error("Warning -- invalid spoof (ident).");
+            return;
+        }
 
-		/* this must be restored! */
-		*p = '@';
-	}
+        /* this must be restored! */
+        *p = '@';
+    }
 
-	if(EmptyString(host))
-	{
-		conf_report_error("Warning -- spoof host empty.");
-		return;
-	}
+    if(EmptyString(host)) {
+        conf_report_error("Warning -- spoof host empty.");
+        return;
+    }
 
-	if(strlen(host) > HOSTLEN)
-	{
-		conf_report_error("Warning -- spoof host length invalid.");
-		return;
-	}
+    if(strlen(host) > HOSTLEN) {
+        conf_report_error("Warning -- spoof host length invalid.");
+        return;
+    }
 
-	if(!valid_hostname(host))
-	{
-		conf_report_error("Warning -- invalid spoof (host).");
-		return;
-	}
+    if(!valid_hostname(host)) {
+        conf_report_error("Warning -- invalid spoof (host).");
+        return;
+    }
 
-	rb_free(yy_aconf->info.name);
-	yy_aconf->info.name = rb_strdup(data);
-	yy_aconf->flags |= CONF_FLAGS_SPOOF_IP;
+    rb_free(yy_aconf->info.name);
+    yy_aconf->info.name = rb_strdup(data);
+    yy_aconf->flags |= CONF_FLAGS_SPOOF_IP;
 }
 
 static void
 conf_set_auth_desc(void *data)
 {
-	rb_free(yy_aconf->desc);
-	yy_aconf->desc = rb_strdup(data);
+    rb_free(yy_aconf->desc);
+    yy_aconf->desc = rb_strdup(data);
 }
 
 static void
 conf_set_auth_flags(void *data)
 {
-	conf_parm_t *args = data;
+    conf_parm_t *args = data;
 
-	set_modes_from_table((int *) &yy_aconf->flags, "flag", auth_table, args);
+    set_modes_from_table((int *) &yy_aconf->flags, "flag", auth_table, args);
 }
 
 static void
 conf_set_auth_redir_serv(void *data)
 {
-	yy_aconf->flags |= CONF_FLAGS_REDIR;
-	rb_free(yy_aconf->info.name);
-	yy_aconf->info.name = rb_strdup(data);
+    yy_aconf->flags |= CONF_FLAGS_REDIR;
+    rb_free(yy_aconf->info.name);
+    yy_aconf->info.name = rb_strdup(data);
 }
 
 static void
 conf_set_auth_redir_port(void *data)
 {
-	int port = *(unsigned int *) data;
+    int port = *(unsigned int *) data;
 
-	yy_aconf->flags |= CONF_FLAGS_REDIR;
-	yy_aconf->port = port;
+    yy_aconf->flags |= CONF_FLAGS_REDIR;
+    yy_aconf->port = port;
 }
 
 static void
 conf_set_auth_class(void *data)
 {
-	rb_free(yy_aconf->className);
-	yy_aconf->className = rb_strdup(data);
+    rb_free(yy_aconf->className);
+    yy_aconf->className = rb_strdup(data);
 }
 
 static void
 conf_set_auth_umodes(void *data)
 {
-	char *umodes = data;
+    char *umodes = data;
 
-	parse_umodes(umodes, &yy_aconf->umodes, &yy_aconf->umodes_mask);
+    parse_umodes(umodes, &yy_aconf->umodes, &yy_aconf->umodes_mask);
 }
 
 static int
 conf_begin_connect(struct TopConf *tc)
 {
-	if(yy_server)
-		free_server_conf(yy_server);
+    if(yy_server)
+        free_server_conf(yy_server);
 
-	yy_server = make_server_conf();
-	yy_server->port = PORTNUM;
-	yy_server->flags |= SERVER_TB;
+    yy_server = make_server_conf();
+    yy_server->port = PORTNUM;
+    yy_server->flags |= SERVER_TB;
 
-	if(conf_cur_block_name != NULL)
-		yy_server->name = rb_strdup(conf_cur_block_name);
+    if(conf_cur_block_name != NULL)
+        yy_server->name = rb_strdup(conf_cur_block_name);
 
-	return 0;
+    return 0;
 }
 
 static int
 conf_end_connect(struct TopConf *tc)
 {
-	if (EmptyString(yy_server->name))
-	{
-		conf_report_error("Ignoring connect block -- missing name.");
-		return 0;
-	}
+    if (EmptyString(yy_server->name)) {
+        conf_report_error("Ignoring connect block -- missing name.");
+        return 0;
+    }
 
-	if (ServerInfo.name != NULL && !irccmp(ServerInfo.name, yy_server->name))
-	{
-		conf_report_error("Ignoring connect block for %s -- name is "
-		                  "equal to my own name.", yy_server->name);
-		return 0;
-	}
+    if (ServerInfo.name != NULL && !irccmp(ServerInfo.name, yy_server->name)) {
+        conf_report_error("Ignoring connect block for %s -- name is "
+                          "equal to my own name.", yy_server->name);
+        return 0;
+    }
 
-	if ((EmptyString(yy_server->passwd) || EmptyString(yy_server->spasswd))
-	    && EmptyString(yy_server->certfp))
-	{
-		conf_report_error("Ignoring connect block for %s -- no "
-		                  "fingerprint or password credentials "
-		                  "provided.", yy_server->name);
-		return 0;
-	}
+    if ((EmptyString(yy_server->passwd) || EmptyString(yy_server->spasswd))
+        && EmptyString(yy_server->certfp)) {
+        conf_report_error("Ignoring connect block for %s -- no "
+                          "fingerprint or password credentials "
+                          "provided.", yy_server->name);
+        return 0;
+    }
 
-	if ((yy_server->flags & SERVER_SSL) && EmptyString(yy_server->certfp))
-	{
-		conf_report_error("Ignoring connect block for %s -- no "
-		                  "fingerprint provided for SSL "
-		                  "connection.", yy_server->name);
-		return 0;
-	}
+    if ((yy_server->flags & SERVER_SSL) && EmptyString(yy_server->certfp)) {
+        conf_report_error("Ignoring connect block for %s -- no "
+                          "fingerprint provided for SSL "
+                          "connection.", yy_server->name);
+        return 0;
+    }
 
-	if (! (yy_server->flags & SERVER_SSL) && ! EmptyString(yy_server->certfp))
-	{
-		conf_report_error("Ignoring connect block for %s -- "
-		                  "fingerprint authentication has "
-		                  "been requested; but the ssl flag "
-		                  "is not set.", yy_server->name);
-		return 0;
-	}
+    if (! (yy_server->flags & SERVER_SSL) && ! EmptyString(yy_server->certfp)) {
+        conf_report_error("Ignoring connect block for %s -- "
+                          "fingerprint authentication has "
+                          "been requested; but the ssl flag "
+                          "is not set.", yy_server->name);
+        return 0;
+    }
 
-	if (EmptyString(yy_server->connect_host)
-	    && GET_SS_FAMILY(&yy_server->connect4) != AF_INET
-	    && GET_SS_FAMILY(&yy_server->connect6) != AF_INET6)
-	{
-		conf_report_error("Ignoring connect block for %s -- missing "
-		                  "host.", yy_server->name);
-		return 0;
-	}
+    if (EmptyString(yy_server->connect_host)
+        && GET_SS_FAMILY(&yy_server->connect4) != AF_INET
+        && GET_SS_FAMILY(&yy_server->connect6) != AF_INET6) {
+        conf_report_error("Ignoring connect block for %s -- missing "
+                          "host.", yy_server->name);
+        return 0;
+    }
 
-	add_server_conf(yy_server);
-	rb_dlinkAdd(yy_server, &yy_server->node, &server_conf_list);
+    add_server_conf(yy_server);
+    rb_dlinkAdd(yy_server, &yy_server->node, &server_conf_list);
 
-	yy_server = NULL;
-	return 0;
+    yy_server = NULL;
+    return 0;
 }
 
 static void
 conf_set_connect_host(void *data)
 {
-	struct rb_sockaddr_storage addr;
+    struct rb_sockaddr_storage addr;
 
-	if(rb_inet_pton_sock(data, &addr) <= 0)
-	{
-		rb_free(yy_server->connect_host);
-		yy_server->connect_host = rb_strdup(data);
-	}
-	else if(GET_SS_FAMILY(&addr) == AF_INET)
-	{
-		yy_server->connect4 = addr;
-	}
-	else if(GET_SS_FAMILY(&addr) == AF_INET6)
-	{
-		yy_server->connect6 = addr;
-	}
-	else
-	{
-		conf_report_error("Unsupported IP address for server connect host (%s)",
-				  (char *)data);
-		return;
-	}
+    if(rb_inet_pton_sock(data, &addr) <= 0) {
+        rb_free(yy_server->connect_host);
+        yy_server->connect_host = rb_strdup(data);
+    } else if(GET_SS_FAMILY(&addr) == AF_INET) {
+        yy_server->connect4 = addr;
+    } else if(GET_SS_FAMILY(&addr) == AF_INET6) {
+        yy_server->connect6 = addr;
+    } else {
+        conf_report_error("Unsupported IP address for server connect host (%s)",
+                          (char *)data);
+        return;
+    }
 }
 
 static void
 conf_set_connect_vhost(void *data)
 {
-	struct rb_sockaddr_storage addr;
+    struct rb_sockaddr_storage addr;
 
-	if(rb_inet_pton_sock(data, &addr) <= 0)
-	{
-		rb_free(yy_server->bind_host);
-		yy_server->bind_host = rb_strdup(data);
-	}
-	else if(GET_SS_FAMILY(&addr) == AF_INET)
-	{
-		yy_server->bind4 = addr;
-	}
-	else if(GET_SS_FAMILY(&addr) == AF_INET6)
-	{
-		yy_server->bind6 = addr;
-	}
-	else
-	{
-		conf_report_error("Unsupported IP address for server connect vhost (%s)",
-				  (char *)data);
-		return;
-	}
+    if(rb_inet_pton_sock(data, &addr) <= 0) {
+        rb_free(yy_server->bind_host);
+        yy_server->bind_host = rb_strdup(data);
+    } else if(GET_SS_FAMILY(&addr) == AF_INET) {
+        yy_server->bind4 = addr;
+    } else if(GET_SS_FAMILY(&addr) == AF_INET6) {
+        yy_server->bind6 = addr;
+    } else {
+        conf_report_error("Unsupported IP address for server connect vhost (%s)",
+                          (char *)data);
+        return;
+    }
 }
 
 static void
 conf_set_connect_send_password(void *data)
 {
-	if(yy_server->spasswd)
-	{
-		memset(yy_server->spasswd, 0, strlen(yy_server->spasswd));
-		rb_free(yy_server->spasswd);
-	}
+    if(yy_server->spasswd) {
+        memset(yy_server->spasswd, 0, strlen(yy_server->spasswd));
+        rb_free(yy_server->spasswd);
+    }
 
-	if (EmptyString((const char *) data))
-	{
-		yy_server->spasswd = NULL;
-		conf_report_warning("Invalid send_password for connect "
-		                    "block; must not be empty if provided");
-	}
-	else if (strpbrk(data, " :"))
-	{
-		yy_server->spasswd = NULL;
-		conf_report_error("Invalid send_password for connect "
-		                  "block; cannot contain spaces or colons");
-	}
-	else
-		yy_server->spasswd = rb_strdup(data);
+    if (EmptyString((const char *) data)) {
+        yy_server->spasswd = NULL;
+        conf_report_warning("Invalid send_password for connect "
+                            "block; must not be empty if provided");
+    } else if (strpbrk(data, " :")) {
+        yy_server->spasswd = NULL;
+        conf_report_error("Invalid send_password for connect "
+                          "block; cannot contain spaces or colons");
+    } else
+        yy_server->spasswd = rb_strdup(data);
 }
 
 static void
 conf_set_connect_accept_password(void *data)
 {
-	if(yy_server->passwd)
-	{
-		memset(yy_server->passwd, 0, strlen(yy_server->passwd));
-		rb_free(yy_server->passwd);
-	}
+    if(yy_server->passwd) {
+        memset(yy_server->passwd, 0, strlen(yy_server->passwd));
+        rb_free(yy_server->passwd);
+    }
 
-	if (EmptyString((const char *) data))
-	{
-		yy_server->passwd = NULL;
-		conf_report_warning("Invalid accept_password for connect "
-		                    "block; must not be empty if provided");
-	}
-	else if (strpbrk(data, " :"))
-	{
-		yy_server->passwd = NULL;
-		conf_report_error("Invalid accept_password for connect "
-		                  "block; cannot contain spaces or colons");
-	}
-	else
-		yy_server->passwd = rb_strdup(data);
+    if (EmptyString((const char *) data)) {
+        yy_server->passwd = NULL;
+        conf_report_warning("Invalid accept_password for connect "
+                            "block; must not be empty if provided");
+    } else if (strpbrk(data, " :")) {
+        yy_server->passwd = NULL;
+        conf_report_error("Invalid accept_password for connect "
+                          "block; cannot contain spaces or colons");
+    } else
+        yy_server->passwd = rb_strdup(data);
 }
 
 static void
 conf_set_connect_fingerprint(void *data)
 {
-	if (yy_server->certfp)
-		rb_free(yy_server->certfp);
-	yy_server->certfp = rb_strdup((char *) data);
+    if (yy_server->certfp)
+        rb_free(yy_server->certfp);
+    yy_server->certfp = rb_strdup((char *) data);
 
-	/* force SSL to be enabled if fingerprint is enabled. */
-	yy_server->flags |= SERVER_SSL;
+    /* force SSL to be enabled if fingerprint is enabled. */
+    yy_server->flags |= SERVER_SSL;
 }
 
 static void
 conf_set_connect_port(void *data)
 {
-	int port = *(unsigned int *) data;
+    int port = *(unsigned int *) data;
 
-	if(port < 1)
-		port = PORTNUM;
+    if(port < 1)
+        port = PORTNUM;
 
-	yy_server->port = port;
+    yy_server->port = port;
 }
 
 static void
 conf_set_connect_aftype(void *data)
 {
-	char *aft = data;
+    char *aft = data;
 
-	if(rb_strcasecmp(aft, "ipv4") == 0)
-		yy_server->aftype = AF_INET;
-	else if(rb_strcasecmp(aft, "ipv6") == 0)
-		yy_server->aftype = AF_INET6;
-	else
-		conf_report_error("connect::aftype '%s' is unknown.", aft);
+    if(rb_strcasecmp(aft, "ipv4") == 0)
+        yy_server->aftype = AF_INET;
+    else if(rb_strcasecmp(aft, "ipv6") == 0)
+        yy_server->aftype = AF_INET6;
+    else
+        conf_report_error("connect::aftype '%s' is unknown.", aft);
 }
 
 static void
 conf_set_connect_flags(void *data)
 {
-	conf_parm_t *args = data;
+    conf_parm_t *args = data;
 
-	set_modes_from_table(&yy_server->flags, "flag", connect_table, args);
+    set_modes_from_table(&yy_server->flags, "flag", connect_table, args);
 }
 
 static void
 conf_set_connect_class(void *data)
 {
-	rb_free(yy_server->class_name);
-	yy_server->class_name = rb_strdup(data);
+    rb_free(yy_server->class_name);
+    yy_server->class_name = rb_strdup(data);
 }
 
 static void
 conf_set_exempt_ip(void *data)
 {
-	struct ConfItem *yy_tmp;
-	int masktype = parse_netmask_strict(data, NULL, NULL);
+    struct ConfItem *yy_tmp;
+    int masktype = parse_netmask_strict(data, NULL, NULL);
 
-	if(masktype != HM_IPV4 && masktype != HM_IPV6)
-	{
-		conf_report_error("Ignoring exempt -- invalid exempt::ip.");
-		return;
-	}
+    if(masktype != HM_IPV4 && masktype != HM_IPV6) {
+        conf_report_error("Ignoring exempt -- invalid exempt::ip.");
+        return;
+    }
 
-	yy_tmp = make_conf();
-	yy_tmp->passwd = rb_strdup("*");
-	yy_tmp->host = rb_strdup(data);
-	yy_tmp->status = CONF_EXEMPTDLINE;
-	add_conf_by_address(yy_tmp->host, CONF_EXEMPTDLINE, NULL, NULL, yy_tmp);
+    yy_tmp = make_conf();
+    yy_tmp->passwd = rb_strdup("*");
+    yy_tmp->host = rb_strdup(data);
+    yy_tmp->status = CONF_EXEMPTDLINE;
+    add_conf_by_address(yy_tmp->host, CONF_EXEMPTDLINE, NULL, NULL, yy_tmp);
 }
 
 static void
 conf_set_secure_ip(void *data)
 {
-	struct ConfItem *yy_tmp;
-	int masktype = parse_netmask_strict(data, NULL, NULL);
+    struct ConfItem *yy_tmp;
+    int masktype = parse_netmask_strict(data, NULL, NULL);
 
-	if(masktype != HM_IPV4 && masktype != HM_IPV6)
-	{
-		conf_report_error("Ignoring secure -- invalid secure::ip.");
-		return;
-	}
+    if(masktype != HM_IPV4 && masktype != HM_IPV6) {
+        conf_report_error("Ignoring secure -- invalid secure::ip.");
+        return;
+    }
 
-	yy_tmp = make_conf();
-	yy_tmp->passwd = rb_strdup("*");
-	yy_tmp->host = rb_strdup(data);
-	yy_tmp->status = CONF_SECURE;
-	add_conf_by_address(yy_tmp->host, CONF_SECURE, NULL, NULL, yy_tmp);
+    yy_tmp = make_conf();
+    yy_tmp->passwd = rb_strdup("*");
+    yy_tmp->host = rb_strdup(data);
+    yy_tmp->status = CONF_SECURE;
+    add_conf_by_address(yy_tmp->host, CONF_SECURE, NULL, NULL, yy_tmp);
 }
 
 static int
 conf_cleanup_cluster(struct TopConf *tc)
 {
-	rb_dlink_node *ptr, *next_ptr;
+    rb_dlink_node *ptr, *next_ptr;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_cluster_list.head)
-	{
-		free_remote_conf(ptr->data);
-		rb_dlinkDestroy(ptr, &yy_cluster_list);
-	}
+    RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_cluster_list.head) {
+        free_remote_conf(ptr->data);
+        rb_dlinkDestroy(ptr, &yy_cluster_list);
+    }
 
-	if(yy_shared != NULL)
-	{
-		free_remote_conf(yy_shared);
-		yy_shared = NULL;
-	}
+    if(yy_shared != NULL) {
+        free_remote_conf(yy_shared);
+        yy_shared = NULL;
+    }
 
-	return 0;
+    return 0;
 }
 
 static void
 conf_set_cluster_name(void *data)
 {
-	if(yy_shared != NULL)
-		free_remote_conf(yy_shared);
+    if(yy_shared != NULL)
+        free_remote_conf(yy_shared);
 
-	yy_shared = make_remote_conf();
-	yy_shared->server = rb_strdup(data);
-	rb_dlinkAddAlloc(yy_shared, &yy_cluster_list);
+    yy_shared = make_remote_conf();
+    yy_shared->server = rb_strdup(data);
+    rb_dlinkAddAlloc(yy_shared, &yy_cluster_list);
 
-	yy_shared = NULL;
+    yy_shared = NULL;
 }
 
 static void
 conf_set_cluster_flags(void *data)
 {
-	conf_parm_t *args = data;
-	int flags = 0;
-	rb_dlink_node *ptr, *next_ptr;
+    conf_parm_t *args = data;
+    int flags = 0;
+    rb_dlink_node *ptr, *next_ptr;
 
-	if(yy_shared != NULL)
-		free_remote_conf(yy_shared);
+    if(yy_shared != NULL)
+        free_remote_conf(yy_shared);
 
-	set_modes_from_table(&flags, "flag", cluster_table, args);
+    set_modes_from_table(&flags, "flag", cluster_table, args);
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_cluster_list.head)
-	{
-		yy_shared = ptr->data;
-		yy_shared->flags = flags;
-		rb_dlinkAddTail(yy_shared, &yy_shared->node, &cluster_conf_list);
-		rb_dlinkDestroy(ptr, &yy_cluster_list);
-	}
+    RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_cluster_list.head) {
+        yy_shared = ptr->data;
+        yy_shared->flags = flags;
+        rb_dlinkAddTail(yy_shared, &yy_shared->node, &cluster_conf_list);
+        rb_dlinkDestroy(ptr, &yy_cluster_list);
+    }
 
-	yy_shared = NULL;
+    yy_shared = NULL;
 }
 
 static void
 conf_set_general_havent_read_conf(void *data)
 {
-	if(*(unsigned int *) data)
-	{
-		conf_report_error("You haven't read your config file properly.");
-		conf_report_error
-			("There is a line in the example conf that will kill your server if not removed.");
-		conf_report_error
-			("Consider actually reading/editing the conf file, and removing this line.");
-		if (!testing_conf)
-			exit(0);
-	}
+    if(*(unsigned int *) data) {
+        conf_report_error("You haven't read your config file properly.");
+        conf_report_error
+        ("There is a line in the example conf that will kill your server if not removed.");
+        conf_report_error
+        ("Consider actually reading/editing the conf file, and removing this line.");
+        if (!testing_conf)
+            exit(0);
+    }
 }
 
 static void
 conf_set_general_hide_error_messages(void *data)
 {
-	char *val = data;
+    char *val = data;
 
-	if(rb_strcasecmp(val, "yes") == 0)
-		ConfigFileEntry.hide_error_messages = 2;
-	else if(rb_strcasecmp(val, "opers") == 0)
-		ConfigFileEntry.hide_error_messages = 1;
-	else if(rb_strcasecmp(val, "no") == 0)
-		ConfigFileEntry.hide_error_messages = 0;
-	else
-		conf_report_error("Invalid setting '%s' for general::hide_error_messages.", val);
+    if(rb_strcasecmp(val, "yes") == 0)
+        ConfigFileEntry.hide_error_messages = 2;
+    else if(rb_strcasecmp(val, "opers") == 0)
+        ConfigFileEntry.hide_error_messages = 1;
+    else if(rb_strcasecmp(val, "no") == 0)
+        ConfigFileEntry.hide_error_messages = 0;
+    else
+        conf_report_error("Invalid setting '%s' for general::hide_error_messages.", val);
 }
 
 static void
 conf_set_general_stats_k_oper_only(void *data)
 {
-	char *val = data;
+    char *val = data;
 
-	if(rb_strcasecmp(val, "yes") == 0)
-		ConfigFileEntry.stats_k_oper_only = 2;
-	else if(rb_strcasecmp(val, "masked") == 0)
-		ConfigFileEntry.stats_k_oper_only = 1;
-	else if(rb_strcasecmp(val, "no") == 0)
-		ConfigFileEntry.stats_k_oper_only = 0;
-	else
-		conf_report_error("Invalid setting '%s' for general::stats_k_oper_only.", val);
+    if(rb_strcasecmp(val, "yes") == 0)
+        ConfigFileEntry.stats_k_oper_only = 2;
+    else if(rb_strcasecmp(val, "masked") == 0)
+        ConfigFileEntry.stats_k_oper_only = 1;
+    else if(rb_strcasecmp(val, "no") == 0)
+        ConfigFileEntry.stats_k_oper_only = 0;
+    else
+        conf_report_error("Invalid setting '%s' for general::stats_k_oper_only.", val);
 }
 
 static void
 conf_set_general_stats_i_oper_only(void *data)
 {
-	char *val = data;
+    char *val = data;
 
-	if(rb_strcasecmp(val, "yes") == 0)
-		ConfigFileEntry.stats_i_oper_only = 2;
-	else if(rb_strcasecmp(val, "masked") == 0)
-		ConfigFileEntry.stats_i_oper_only = 1;
-	else if(rb_strcasecmp(val, "no") == 0)
-		ConfigFileEntry.stats_i_oper_only = 0;
-	else
-		conf_report_error("Invalid setting '%s' for general::stats_i_oper_only.", val);
+    if(rb_strcasecmp(val, "yes") == 0)
+        ConfigFileEntry.stats_i_oper_only = 2;
+    else if(rb_strcasecmp(val, "masked") == 0)
+        ConfigFileEntry.stats_i_oper_only = 1;
+    else if(rb_strcasecmp(val, "no") == 0)
+        ConfigFileEntry.stats_i_oper_only = 0;
+    else
+        conf_report_error("Invalid setting '%s' for general::stats_i_oper_only.", val);
 }
 
 static void
 conf_set_general_stats_l_oper_only(void *data)
 {
-	char *val = data;
+    char *val = data;
 
-	if(rb_strcasecmp(val, "yes") == 0)
-		ConfigFileEntry.stats_l_oper_only = STATS_L_OPER_ONLY_YES;
-	else if(rb_strcasecmp(val, "self") == 0)
-		ConfigFileEntry.stats_l_oper_only = STATS_L_OPER_ONLY_SELF;
-	else if(rb_strcasecmp(val, "no") == 0)
-		ConfigFileEntry.stats_l_oper_only = STATS_L_OPER_ONLY_NO;
-	else
-		conf_report_error("Invalid setting '%s' for general::stats_l_oper_only.", val);
+    if(rb_strcasecmp(val, "yes") == 0)
+        ConfigFileEntry.stats_l_oper_only = STATS_L_OPER_ONLY_YES;
+    else if(rb_strcasecmp(val, "self") == 0)
+        ConfigFileEntry.stats_l_oper_only = STATS_L_OPER_ONLY_SELF;
+    else if(rb_strcasecmp(val, "no") == 0)
+        ConfigFileEntry.stats_l_oper_only = STATS_L_OPER_ONLY_NO;
+    else
+        conf_report_error("Invalid setting '%s' for general::stats_l_oper_only.", val);
 }
 
 static void
 conf_set_general_default_umodes(void *data)
 {
-	char *umodes = data;
+    char *umodes = data;
 
-	parse_umodes(umodes, &ConfigFileEntry.default_umodes, NULL);
+    parse_umodes(umodes, &ConfigFileEntry.default_umodes, NULL);
 }
 
 static void
 conf_set_general_oper_umodes(void *data)
 {
-	set_modes_from_table(&ConfigFileEntry.oper_umodes, "umode", umode_table, data);
+    set_modes_from_table(&ConfigFileEntry.oper_umodes, "umode", umode_table, data);
 }
 
 static void
 conf_set_general_certfp_method(void *data)
 {
-	char *method = data;
+    char *method = data;
 
-	if (!rb_strcasecmp(method, CERTFP_NAME_CERT_SHA1))
-		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_CERT_SHA1;
-	else if (!rb_strcasecmp(method, CERTFP_NAME_CERT_SHA256))
-		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_CERT_SHA256;
-	else if (!rb_strcasecmp(method, CERTFP_NAME_CERT_SHA512))
-		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_CERT_SHA512;
-	else if (!rb_strcasecmp(method, CERTFP_NAME_SPKI_SHA256))
-		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SPKI_SHA256;
-	else if (!rb_strcasecmp(method, CERTFP_NAME_SPKI_SHA512))
-		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SPKI_SHA512;
-	else
-	{
-		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_CERT_SHA1;
-		conf_report_error("Ignoring general::certfp_method -- bogus certfp method %s", method);
-	}
+    if (!rb_strcasecmp(method, CERTFP_NAME_CERT_SHA1))
+        ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_CERT_SHA1;
+    else if (!rb_strcasecmp(method, CERTFP_NAME_CERT_SHA256))
+        ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_CERT_SHA256;
+    else if (!rb_strcasecmp(method, CERTFP_NAME_CERT_SHA512))
+        ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_CERT_SHA512;
+    else if (!rb_strcasecmp(method, CERTFP_NAME_SPKI_SHA256))
+        ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SPKI_SHA256;
+    else if (!rb_strcasecmp(method, CERTFP_NAME_SPKI_SHA512))
+        ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SPKI_SHA512;
+    else {
+        ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_CERT_SHA1;
+        conf_report_error("Ignoring general::certfp_method -- bogus certfp method %s", method);
+    }
 }
 
 static void
 conf_set_general_oper_only_umodes(void *data)
 {
-	set_modes_from_table(&ConfigFileEntry.oper_only_umodes, "umode", umode_table, data);
+    set_modes_from_table(&ConfigFileEntry.oper_only_umodes, "umode", umode_table, data);
 }
 
 static void
 conf_set_general_oper_snomask(void *data)
 {
-	char *pm;
-	int what = MODE_ADD, flag;
+    char *pm;
+    int what = MODE_ADD, flag;
 
-	ConfigFileEntry.oper_snomask = 0;
-	for (pm = (char *) data; *pm; pm++)
-	{
-		switch (*pm)
-		{
-		case '+':
-			what = MODE_ADD;
-			break;
-		case '-':
-			what = MODE_DEL;
-			break;
+    ConfigFileEntry.oper_snomask = 0;
+    for (pm = (char *) data; *pm; pm++) {
+        switch (*pm) {
+        case '+':
+            what = MODE_ADD;
+            break;
+        case '-':
+            what = MODE_DEL;
+            break;
 
-		default:
-			if ((flag = snomask_modes[(unsigned char) *pm]))
-			{
-				if (what == MODE_ADD)
-					ConfigFileEntry.oper_snomask |= flag;
-				else
-					ConfigFileEntry.oper_snomask &= ~flag;
-			}
-			break;
-		}
-	}
+        default:
+            if ((flag = snomask_modes[(unsigned char) *pm])) {
+                if (what == MODE_ADD)
+                    ConfigFileEntry.oper_snomask |= flag;
+                else
+                    ConfigFileEntry.oper_snomask &= ~flag;
+            }
+            break;
+        }
+    }
 }
 
 static void
 conf_set_general_hidden_caps(void *data)
 {
-	size_t n;
+    size_t n;
 
-	if (ConfigFileEntry.hidden_caps != NULL)
-	{
-		for (n = 0; ConfigFileEntry.hidden_caps[n] != NULL; n++)
-			rb_free(ConfigFileEntry.hidden_caps[n]);
+    if (ConfigFileEntry.hidden_caps != NULL) {
+        for (n = 0; ConfigFileEntry.hidden_caps[n] != NULL; n++)
+            rb_free(ConfigFileEntry.hidden_caps[n]);
 
-		rb_free(ConfigFileEntry.hidden_caps);
-	}
+        rb_free(ConfigFileEntry.hidden_caps);
+    }
 
-	n = 0;
+    n = 0;
 
-	for (conf_parm_t *arg = data; arg != NULL; arg = arg->next)
-		n += 1;
+    for (conf_parm_t *arg = data; arg != NULL; arg = arg->next)
+        n += 1;
 
-	ConfigFileEntry.hidden_caps = rb_malloc(sizeof *ConfigFileEntry.hidden_caps * (n + 1));
+    ConfigFileEntry.hidden_caps = rb_malloc(sizeof *ConfigFileEntry.hidden_caps * (n + 1));
 
-	n = 0;
+    n = 0;
 
-	for (conf_parm_t *arg = data; arg; arg = arg->next)
-		ConfigFileEntry.hidden_caps[n++] = rb_strdup(arg->v.string);
+    for (conf_parm_t *arg = data; arg; arg = arg->next)
+        ConfigFileEntry.hidden_caps[n++] = rb_strdup(arg->v.string);
 
-	ConfigFileEntry.hidden_caps[n] = NULL;
+    ConfigFileEntry.hidden_caps[n] = NULL;
 }
 
 static void
 conf_set_serverhide_links_delay(void *data)
 {
-	int val = *(unsigned int *) data;
+    int val = *(unsigned int *) data;
 
-	ConfigServerHide.links_delay = val;
+    ConfigServerHide.links_delay = val;
 }
 
 static void
 conf_set_service_name(void *data)
 {
-	const char *s;
-	char *tmp;
-	int dots = 0;
+    const char *s;
+    char *tmp;
+    int dots = 0;
 
-	for(s = data; *s != '\0'; s++)
-	{
-		if(!IsServChar(*s))
-		{
-			conf_report_error("Ignoring service::name "
-					 "-- bogus servername.");
-			return;
-		}
-		else if(*s == '.')
-			 dots++;
-	}
+    for(s = data; *s != '\0'; s++) {
+        if(!IsServChar(*s)) {
+            conf_report_error("Ignoring service::name "
+                              "-- bogus servername.");
+            return;
+        } else if(*s == '.')
+            dots++;
+    }
 
-	if(!dots)
-	{
-		conf_report_error("Ignoring service::name -- must contain '.'");
-		return;
-	}
+    if(!dots) {
+        conf_report_error("Ignoring service::name -- must contain '.'");
+        return;
+    }
 
-	tmp = rb_strdup(data);
-	rb_dlinkAddAlloc(tmp, &service_list);
+    tmp = rb_strdup(data);
+    rb_dlinkAddAlloc(tmp, &service_list);
 }
 
 static int
 conf_begin_alias(struct TopConf *tc)
 {
-	yy_alias = rb_malloc(sizeof(struct alias_entry));
+    yy_alias = rb_malloc(sizeof(struct alias_entry));
 
-	if (conf_cur_block_name != NULL)
-		yy_alias->name = rb_strdup(conf_cur_block_name);
+    if (conf_cur_block_name != NULL)
+        yy_alias->name = rb_strdup(conf_cur_block_name);
 
-	yy_alias->flags = 0;
+    yy_alias->flags = 0;
 
-	return 0;
+    return 0;
 }
 
 static int
 conf_end_alias(struct TopConf *tc)
 {
-	if (yy_alias == NULL)
-		return -1;
+    if (yy_alias == NULL)
+        return -1;
 
-	if (yy_alias->name == NULL)
-	{
-		conf_report_error("Ignoring alias -- must have a name.");
+    if (yy_alias->name == NULL) {
+        conf_report_error("Ignoring alias -- must have a name.");
 
-		rb_free(yy_alias);
+        rb_free(yy_alias);
 
-		return -1;
-	}
+        return -1;
+    }
 
-	if (yy_alias->target == NULL)
-	{
-		conf_report_error("Ignoring alias -- must have a target.");
+    if (yy_alias->target == NULL) {
+        conf_report_error("Ignoring alias -- must have a target.");
 
-		rb_free(yy_alias);
+        rb_free(yy_alias);
 
-		return -1;
-	}
+        return -1;
+    }
 
-	rb_dictionary_add(alias_dict, yy_alias->name, yy_alias);
+    rb_dictionary_add(alias_dict, yy_alias->name, yy_alias);
 
-	return 0;
+    return 0;
 }
 
 static void
 conf_set_alias_name(void *data)
 {
-	if (data == NULL || yy_alias == NULL)	/* this shouldn't ever happen */
-		return;
+    if (data == NULL || yy_alias == NULL)	/* this shouldn't ever happen */
+        return;
 
-	yy_alias->name = rb_strdup(data);
+    yy_alias->name = rb_strdup(data);
 }
 
 static void
 conf_set_alias_target(void *data)
 {
-	if (data == NULL || yy_alias == NULL)	/* this shouldn't ever happen */
-		return;
+    if (data == NULL || yy_alias == NULL)	/* this shouldn't ever happen */
+        return;
 
-	yy_alias->target = rb_strdup(data);
+    yy_alias->target = rb_strdup(data);
 }
 
 static void
 conf_set_channel_kick_on_split_riding(void *data)
 {
-	conf_report_warning("Ignoring deprecated option channel::kick_on_split_riding;"
-		" please remove it from ircd.conf entirely");
+    conf_report_warning("Ignoring deprecated option channel::kick_on_split_riding;"
+                        " please remove it from ircd.conf entirely");
 }
 
 static void
 conf_set_channel_autochanmodes(void *data)
 {
-	char *pm;
-	int what = MODE_ADD;
+    char *pm;
+    int what = MODE_ADD;
 
-	ConfigChannel.autochanmodes = 0;
-	for (pm = (char *) data; *pm; pm++)
-	{
-		switch (*pm)
-		{
-		case '+':
-			what = MODE_ADD;
-			break;
-		case '-':
-			what = MODE_DEL;
-			break;
+    ConfigChannel.autochanmodes = 0;
+    for (pm = (char *) data; *pm; pm++) {
+        switch (*pm) {
+        case '+':
+            what = MODE_ADD;
+            break;
+        case '-':
+            what = MODE_DEL;
+            break;
 
-		default:
-			if (chmode_table[(unsigned char) *pm].set_func == chm_simple)
-			{
-				if (what == MODE_ADD)
-					ConfigChannel.autochanmodes |= chmode_table[(unsigned char) *pm].mode_type;
-				else
-					ConfigChannel.autochanmodes &= ~chmode_table[(unsigned char) *pm].mode_type;
-			}
-			else
-			{
-				conf_report_error("channel::autochanmodes -- Invalid channel mode %c", *pm);
-				continue;
-			}
-			break;
-		}
-	}
+        default:
+            if (chmode_table[(unsigned char) *pm].set_func == chm_simple) {
+                if (what == MODE_ADD)
+                    ConfigChannel.autochanmodes |= chmode_table[(unsigned char) *pm].mode_type;
+                else
+                    ConfigChannel.autochanmodes &= ~chmode_table[(unsigned char) *pm].mode_type;
+            } else {
+                conf_report_error("channel::autochanmodes -- Invalid channel mode %c", *pm);
+                continue;
+            }
+            break;
+        }
+    }
 }
 
 /* XXX for below */
@@ -1879,466 +1757,418 @@ static void conf_set_dnsbl_entry_reason(void *data);
 static int
 conf_warn_blacklist_deprecation(struct TopConf *tc)
 {
-	conf_report_error("blacklist{} blocks have been deprecated -- use dnsbl{} blocks instead.");
-	return 0;
+    conf_report_error("blacklist{} blocks have been deprecated -- use dnsbl{} blocks instead.");
+    return 0;
 }
 
 static void
 conf_set_dnsbl_entry_host(void *data)
 {
-	if (yy_dnsbl_entry_host)
-	{
-		conf_report_error("dnsbl::host %s overlaps existing host %s",
-			(char *)data, yy_dnsbl_entry_host);
+    if (yy_dnsbl_entry_host) {
+        conf_report_error("dnsbl::host %s overlaps existing host %s",
+                          (char *)data, yy_dnsbl_entry_host);
 
-		/* Cleanup */
-		conf_set_dnsbl_entry_reason(NULL);
-		return;
-	}
+        /* Cleanup */
+        conf_set_dnsbl_entry_reason(NULL);
+        return;
+    }
 
-	yy_dnsbl_entry_iptype |= IPTYPE_IPV4;
-	yy_dnsbl_entry_host = rb_strdup(data);
+    yy_dnsbl_entry_iptype |= IPTYPE_IPV4;
+    yy_dnsbl_entry_host = rb_strdup(data);
 }
 
 static void
 conf_set_dnsbl_entry_type(void *data)
 {
-	conf_parm_t *args = data;
+    conf_parm_t *args = data;
 
-	/* Don't assume we have either if we got here */
-	yy_dnsbl_entry_iptype = 0;
+    /* Don't assume we have either if we got here */
+    yy_dnsbl_entry_iptype = 0;
 
-	for (; args; args = args->next)
-	{
-		if (!rb_strcasecmp(args->v.string, "ipv4"))
-			yy_dnsbl_entry_iptype |= IPTYPE_IPV4;
-		else if (!rb_strcasecmp(args->v.string, "ipv6"))
-			yy_dnsbl_entry_iptype |= IPTYPE_IPV6;
-		else
-			conf_report_error("dnsbl::type has unknown address family %s",
-					  args->v.string);
-	}
+    for (; args; args = args->next) {
+        if (!rb_strcasecmp(args->v.string, "ipv4"))
+            yy_dnsbl_entry_iptype |= IPTYPE_IPV4;
+        else if (!rb_strcasecmp(args->v.string, "ipv6"))
+            yy_dnsbl_entry_iptype |= IPTYPE_IPV6;
+        else
+            conf_report_error("dnsbl::type has unknown address family %s",
+                              args->v.string);
+    }
 
-	/* If we have neither, just default to IPv4 */
-	if (!yy_dnsbl_entry_iptype)
-	{
-		conf_report_warning("dnsbl::type has neither IPv4 nor IPv6 (defaulting to IPv4)");
-		yy_dnsbl_entry_iptype = IPTYPE_IPV4;
-	}
+    /* If we have neither, just default to IPv4 */
+    if (!yy_dnsbl_entry_iptype) {
+        conf_report_warning("dnsbl::type has neither IPv4 nor IPv6 (defaulting to IPv4)");
+        yy_dnsbl_entry_iptype = IPTYPE_IPV4;
+    }
 }
 
 static void
 conf_set_dnsbl_entry_matches(void *data)
 {
-	conf_parm_t *args = data;
-	enum filter_t { FILTER_NONE, FILTER_ALL, FILTER_LAST };
+    conf_parm_t *args = data;
+    enum filter_t { FILTER_NONE, FILTER_ALL, FILTER_LAST };
 
-	for (; args; args = args->next)
-	{
-		char *str = args->v.string;
-		char *p;
-		enum filter_t type = FILTER_LAST;
+    for (; args; args = args->next) {
+        char *str = args->v.string;
+        char *p;
+        enum filter_t type = FILTER_LAST;
 
-		if (CF_TYPE(args->type) != CF_QSTRING)
-		{
-			conf_report_error("dnsbl::matches -- must be quoted string");
-			continue;
-		}
+        if (CF_TYPE(args->type) != CF_QSTRING) {
+            conf_report_error("dnsbl::matches -- must be quoted string");
+            continue;
+        }
 
-		if (str == NULL)
-		{
-			conf_report_error("dnsbl::matches -- invalid entry");
-			continue;
-		}
+        if (str == NULL) {
+            conf_report_error("dnsbl::matches -- invalid entry");
+            continue;
+        }
 
-		if (strlen(str) > HOSTIPLEN)
-		{
-			conf_report_error("dnsbl::matches has an entry too long: %s",
-					str);
-			continue;
-		}
+        if (strlen(str) > HOSTIPLEN) {
+            conf_report_error("dnsbl::matches has an entry too long: %s",
+                              str);
+            continue;
+        }
 
-		for (p = str; *p != '\0'; p++)
-		{
-			/* Check for validity */
-			if (*p == '.')
-				type = FILTER_ALL;
-			else if (!isdigit((unsigned char)*p))
-			{
-				conf_report_error("dnsbl::matches has invalid IP match entry %s",
-						str);
-				type = FILTER_NONE;
-				break;
-			}
-		}
+        for (p = str; *p != '\0'; p++) {
+            /* Check for validity */
+            if (*p == '.')
+                type = FILTER_ALL;
+            else if (!isdigit((unsigned char)*p)) {
+                conf_report_error("dnsbl::matches has invalid IP match entry %s",
+                                  str);
+                type = FILTER_NONE;
+                break;
+            }
+        }
 
-		if (type == FILTER_ALL)
-		{
-			/* Basic IP sanity check */
-			struct rb_sockaddr_storage tmp;
-			if (rb_inet_pton(AF_INET, str, &tmp) <= 0)
-			{
-				conf_report_error("dnsbl::matches has invalid IP match entry %s",
-						str);
-				continue;
-			}
-		}
-		else if (type == FILTER_LAST)
-		{
-			/* Verify it's the correct length */
-			if (strlen(str) > 3)
-			{
-				conf_report_error("dnsbl::matches has invalid octet match entry %s",
-						str);
-				continue;
-			}
-		}
-		else
-		{
-			continue; /* Invalid entry */
-		}
+        if (type == FILTER_ALL) {
+            /* Basic IP sanity check */
+            struct rb_sockaddr_storage tmp;
+            if (rb_inet_pton(AF_INET, str, &tmp) <= 0) {
+                conf_report_error("dnsbl::matches has invalid IP match entry %s",
+                                  str);
+                continue;
+            }
+        } else if (type == FILTER_LAST) {
+            /* Verify it's the correct length */
+            if (strlen(str) > 3) {
+                conf_report_error("dnsbl::matches has invalid octet match entry %s",
+                                  str);
+                continue;
+            }
+        } else {
+            continue; /* Invalid entry */
+        }
 
-		rb_dlinkAddAlloc(rb_strdup(str), &yy_dnsbl_entry_filters);
-	}
+        rb_dlinkAddAlloc(rb_strdup(str), &yy_dnsbl_entry_filters);
+    }
 }
 
 static void
 conf_set_dnsbl_entry_reason(void *data)
 {
-	rb_dlink_node *ptr, *nptr;
+    rb_dlink_node *ptr, *nptr;
 
-	if (yy_dnsbl_entry_host && data)
-	{
-		yy_dnsbl_entry_reason = rb_strdup(data);
-		if (yy_dnsbl_entry_iptype & IPTYPE_IPV6)
-		{
-			/* Make sure things fit (magic number 64 = alnum count + dots)
-			 * Example: 1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa
-			 */
-			if ((64 + strlen(yy_dnsbl_entry_host)) > IRCD_RES_HOSTLEN)
-			{
-				conf_report_error("dnsbl::host %s results in IPv6 queries that are too long",
-						  yy_dnsbl_entry_host);
-				goto cleanup_bl;
-			}
-		}
-		/* Avoid doing redundant check, IPv6 is bigger than IPv4 --Elizabeth */
-		if ((yy_dnsbl_entry_iptype & IPTYPE_IPV4) && !(yy_dnsbl_entry_iptype & IPTYPE_IPV6))
-		{
-			/* Make sure things fit for worst case (magic number 16 = number of nums + dots)
-			 * Example: 127.127.127.127.in-addr.arpa
-			 */
-			if ((16 + strlen(yy_dnsbl_entry_host)) > IRCD_RES_HOSTLEN)
-			{
-				conf_report_error("dnsbl::host %s results in IPv4 queries that are too long",
-						  yy_dnsbl_entry_host);
-				goto cleanup_bl;
-			}
-		}
+    if (yy_dnsbl_entry_host && data) {
+        yy_dnsbl_entry_reason = rb_strdup(data);
+        if (yy_dnsbl_entry_iptype & IPTYPE_IPV6) {
+            /* Make sure things fit (magic number 64 = alnum count + dots)
+             * Example: 1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa
+             */
+            if ((64 + strlen(yy_dnsbl_entry_host)) > IRCD_RES_HOSTLEN) {
+                conf_report_error("dnsbl::host %s results in IPv6 queries that are too long",
+                                  yy_dnsbl_entry_host);
+                goto cleanup_bl;
+            }
+        }
+        /* Avoid doing redundant check, IPv6 is bigger than IPv4 --Elizabeth */
+        if ((yy_dnsbl_entry_iptype & IPTYPE_IPV4) && !(yy_dnsbl_entry_iptype & IPTYPE_IPV6)) {
+            /* Make sure things fit for worst case (magic number 16 = number of nums + dots)
+             * Example: 127.127.127.127.in-addr.arpa
+             */
+            if ((16 + strlen(yy_dnsbl_entry_host)) > IRCD_RES_HOSTLEN) {
+                conf_report_error("dnsbl::host %s results in IPv4 queries that are too long",
+                                  yy_dnsbl_entry_host);
+                goto cleanup_bl;
+            }
+        }
 
-		add_dnsbl_entry(yy_dnsbl_entry_host, yy_dnsbl_entry_reason, yy_dnsbl_entry_iptype, &yy_dnsbl_entry_filters);
-	}
+        add_dnsbl_entry(yy_dnsbl_entry_host, yy_dnsbl_entry_reason, yy_dnsbl_entry_iptype, &yy_dnsbl_entry_filters);
+    }
 
 cleanup_bl:
-	RB_DLINK_FOREACH_SAFE(ptr, nptr, yy_dnsbl_entry_filters.head)
-	{
-		rb_free(ptr->data);
-		rb_dlinkDestroy(ptr, &yy_dnsbl_entry_filters);
-	}
+    RB_DLINK_FOREACH_SAFE(ptr, nptr, yy_dnsbl_entry_filters.head) {
+        rb_free(ptr->data);
+        rb_dlinkDestroy(ptr, &yy_dnsbl_entry_filters);
+    }
 
-	yy_dnsbl_entry_filters = (rb_dlink_list){ NULL, NULL, 0 };
+    yy_dnsbl_entry_filters = (rb_dlink_list) {
+        NULL, NULL, 0
+    };
 
-	rb_free(yy_dnsbl_entry_host);
-	rb_free(yy_dnsbl_entry_reason);
-	yy_dnsbl_entry_host = NULL;
-	yy_dnsbl_entry_reason = NULL;
-	yy_dnsbl_entry_iptype = 0;
+    rb_free(yy_dnsbl_entry_host);
+    rb_free(yy_dnsbl_entry_reason);
+    yy_dnsbl_entry_host = NULL;
+    yy_dnsbl_entry_reason = NULL;
+    yy_dnsbl_entry_iptype = 0;
 }
 
 
-struct opm_scanner
-{
-	const char *type;
-	uint16_t port;
+struct opm_scanner {
+    const char *type;
+    uint16_t port;
 
-	rb_dlink_node node;
+    rb_dlink_node node;
 };
 
 static int
 conf_begin_opm(struct TopConf *tc)
 {
-	yy_opm_address_ipv4 = yy_opm_address_ipv6 = NULL;
-	yy_opm_port_ipv4 = yy_opm_port_ipv6 = yy_opm_timeout = 0;
-	delete_opm_proxy_scanner_all();
-	delete_opm_listener_all();
-	return 0;
+    yy_opm_address_ipv4 = yy_opm_address_ipv6 = NULL;
+    yy_opm_port_ipv4 = yy_opm_port_ipv6 = yy_opm_timeout = 0;
+    delete_opm_proxy_scanner_all();
+    delete_opm_listener_all();
+    return 0;
 }
 
 static int
 conf_end_opm(struct TopConf *tc)
 {
-	rb_dlink_node *ptr, *nptr;
-	bool fail = false;
+    rb_dlink_node *ptr, *nptr;
+    bool fail = false;
 
-	if(rb_dlink_list_length(&yy_opm_scanner_list) == 0)
-	{
-		conf_report_error("No opm scanners configured -- disabling opm.");
-		fail = true;
-		goto end;
-	}
+    if(rb_dlink_list_length(&yy_opm_scanner_list) == 0) {
+        conf_report_error("No opm scanners configured -- disabling opm.");
+        fail = true;
+        goto end;
+    }
 
-	if(yy_opm_port_ipv4 > 0)
-	{
-		if(yy_opm_address_ipv4 != NULL)
-			conf_create_opm_listener(yy_opm_address_ipv4, yy_opm_port_ipv4);
-		else
-		{
-			char ip[HOSTIPLEN];
-			if(!rb_inet_ntop_sock((struct sockaddr *)&ServerInfo.bind4, ip, sizeof(ip)))
-				conf_report_error("No opm::listen_ipv4 nor serverinfo::vhost directive; cannot listen on IPv4");
-			else
-				conf_create_opm_listener(ip, yy_opm_port_ipv4);
-		}
-	}
+    if(yy_opm_port_ipv4 > 0) {
+        if(yy_opm_address_ipv4 != NULL)
+            conf_create_opm_listener(yy_opm_address_ipv4, yy_opm_port_ipv4);
+        else {
+            char ip[HOSTIPLEN];
+            if(!rb_inet_ntop_sock((struct sockaddr *)&ServerInfo.bind4, ip, sizeof(ip)))
+                conf_report_error("No opm::listen_ipv4 nor serverinfo::vhost directive; cannot listen on IPv4");
+            else
+                conf_create_opm_listener(ip, yy_opm_port_ipv4);
+        }
+    }
 
-	if(yy_opm_port_ipv6 > 0)
-	{
-		if(yy_opm_address_ipv6 != NULL)
-			conf_create_opm_listener(yy_opm_address_ipv6, yy_opm_port_ipv6);
-		else
-		{
-			char ip[HOSTIPLEN];
-			if(!rb_inet_ntop_sock((struct sockaddr *)&ServerInfo.bind6, ip, sizeof(ip)))
-				conf_report_error("No opm::listen_ipv6 nor serverinfo::vhost directive; cannot listen on IPv6");
-			else
-				conf_create_opm_listener(ip, yy_opm_port_ipv6);
-		}
-	}
+    if(yy_opm_port_ipv6 > 0) {
+        if(yy_opm_address_ipv6 != NULL)
+            conf_create_opm_listener(yy_opm_address_ipv6, yy_opm_port_ipv6);
+        else {
+            char ip[HOSTIPLEN];
+            if(!rb_inet_ntop_sock((struct sockaddr *)&ServerInfo.bind6, ip, sizeof(ip)))
+                conf_report_error("No opm::listen_ipv6 nor serverinfo::vhost directive; cannot listen on IPv6");
+            else
+                conf_create_opm_listener(ip, yy_opm_port_ipv6);
+        }
+    }
 
-	/* If there's no listeners... */
-	fail = (yy_opm_port_ipv4 == 0 || yy_opm_port_ipv6 == 0);
-	if(!fail && yy_opm_timeout > 0 && yy_opm_timeout < 60)
-		/* Send timeout */
-		set_authd_timeout("opm_timeout", yy_opm_timeout);
-	else if(fail)
-		conf_report_error("No opm listeners -- disabling");
-	else if(yy_opm_timeout <= 0 || yy_opm_timeout >= 60)
-		conf_report_error("opm::timeout value is invalid -- ignoring");
+    /* If there's no listeners... */
+    fail = (yy_opm_port_ipv4 == 0 || yy_opm_port_ipv6 == 0);
+    if(!fail && yy_opm_timeout > 0 && yy_opm_timeout < 60)
+        /* Send timeout */
+        set_authd_timeout("opm_timeout", yy_opm_timeout);
+    else if(fail)
+        conf_report_error("No opm listeners -- disabling");
+    else if(yy_opm_timeout <= 0 || yy_opm_timeout >= 60)
+        conf_report_error("opm::timeout value is invalid -- ignoring");
 
 end:
-	RB_DLINK_FOREACH_SAFE(ptr, nptr, yy_opm_scanner_list.head)
-	{
-		struct opm_scanner *scanner = ptr->data;
+    RB_DLINK_FOREACH_SAFE(ptr, nptr, yy_opm_scanner_list.head) {
+        struct opm_scanner *scanner = ptr->data;
 
-		if(!fail)
-			create_opm_proxy_scanner(scanner->type, scanner->port);
+        if(!fail)
+            create_opm_proxy_scanner(scanner->type, scanner->port);
 
-		rb_dlinkDelete(&scanner->node, &yy_opm_scanner_list);
-		rb_free(scanner);
-	}
+        rb_dlinkDelete(&scanner->node, &yy_opm_scanner_list);
+        rb_free(scanner);
+    }
 
-	if(!fail)
-		opm_check_enable(true);
+    if(!fail)
+        opm_check_enable(true);
 
-	rb_free(yy_opm_address_ipv4);
-	rb_free(yy_opm_address_ipv6);
-	return 0;
+    rb_free(yy_opm_address_ipv4);
+    rb_free(yy_opm_address_ipv6);
+    return 0;
 }
 
 static void
 conf_set_opm_timeout(void *data)
 {
-	int timeout = *((int *)data);
+    int timeout = *((int *)data);
 
-	if(timeout <= 0 || timeout > 60)
-	{
-		conf_report_error("opm::timeout value %d is bogus, ignoring", timeout);
-		return;
-	}
+    if(timeout <= 0 || timeout > 60) {
+        conf_report_error("opm::timeout value %d is bogus, ignoring", timeout);
+        return;
+    }
 
-	yy_opm_timeout = timeout;
+    yy_opm_timeout = timeout;
 }
 
 static void
 conf_set_opm_listen_address_both(void *data, bool ipv6)
 {
-	struct rb_sockaddr_storage addr;
-	const char *confstr = (ipv6 ? "opm::listen_ipv6" : "opm::listen_ipv4");
-	char *ip = data;
+    struct rb_sockaddr_storage addr;
+    const char *confstr = (ipv6 ? "opm::listen_ipv6" : "opm::listen_ipv4");
+    char *ip = data;
 
-	if(!rb_inet_pton_sock(ip, &addr))
-	{
-		conf_report_error("%s is an invalid address: %s", confstr, ip);
-		return;
-	}
+    if(!rb_inet_pton_sock(ip, &addr)) {
+        conf_report_error("%s is an invalid address: %s", confstr, ip);
+        return;
+    }
 
-	if(ipv6)
-	{
-		if(GET_SS_FAMILY(&addr) != AF_INET6)
-		{
-			conf_report_error("%s is of the wrong address type: %s", confstr, ip);
-			return;
-		}
+    if(ipv6) {
+        if(GET_SS_FAMILY(&addr) != AF_INET6) {
+            conf_report_error("%s is of the wrong address type: %s", confstr, ip);
+            return;
+        }
 
-		if(yy_opm_address_ipv6 != NULL)
-		{
-			conf_report_error("%s overwrites previous address %s", confstr, ip);
-			return;
-		}
+        if(yy_opm_address_ipv6 != NULL) {
+            conf_report_error("%s overwrites previous address %s", confstr, ip);
+            return;
+        }
 
-		yy_opm_address_ipv6 = rb_strdup(ip);
-	}
-	else
-	{
-		if(GET_SS_FAMILY(&addr) != AF_INET)
-		{
-			conf_report_error("%s is of the wrong address type: %s", confstr, ip);
-			return;
-		}
+        yy_opm_address_ipv6 = rb_strdup(ip);
+    } else {
+        if(GET_SS_FAMILY(&addr) != AF_INET) {
+            conf_report_error("%s is of the wrong address type: %s", confstr, ip);
+            return;
+        }
 
-		if(yy_opm_address_ipv4 != NULL)
-		{
-			conf_report_error("%s overwrites previous address %s", confstr, ip);
-			return;
-		}
+        if(yy_opm_address_ipv4 != NULL) {
+            conf_report_error("%s overwrites previous address %s", confstr, ip);
+            return;
+        }
 
-		yy_opm_address_ipv4 = rb_strdup(ip);
-	}
+        yy_opm_address_ipv4 = rb_strdup(ip);
+    }
 }
 
 static void
 conf_set_opm_listen_address_ipv4(void *data)
 {
-	conf_set_opm_listen_address_both(data, false);
+    conf_set_opm_listen_address_both(data, false);
 }
 
 static void
 conf_set_opm_listen_address_ipv6(void *data)
 {
-	conf_set_opm_listen_address_both(data, true);
+    conf_set_opm_listen_address_both(data, true);
 }
 
 static void
 conf_set_opm_listen_port_both(void *data, bool ipv6)
 {
-	int port = *((int *)data);
-	const char *confstr = (ipv6 ? "opm::port_ipv6" : "opm::port_ipv4");
+    int port = *((int *)data);
+    const char *confstr = (ipv6 ? "opm::port_ipv6" : "opm::port_ipv4");
 
-	if(port > 65535 || port <= 0)
-	{
-		conf_report_error("%s is out of range: %d", confstr, port);
-		return;
-	}
+    if(port > 65535 || port <= 0) {
+        conf_report_error("%s is out of range: %d", confstr, port);
+        return;
+    }
 
-	if(ipv6)
-	{
-		if(yy_opm_port_ipv4)
-		{
-			conf_report_error("%s overwrites existing port %hu",
-					confstr, yy_opm_port_ipv4);
-			return;
-		}
+    if(ipv6) {
+        if(yy_opm_port_ipv4) {
+            conf_report_error("%s overwrites existing port %hu",
+                              confstr, yy_opm_port_ipv4);
+            return;
+        }
 
-		yy_opm_port_ipv4 = port;
-	}
-	else
-	{
-		if(yy_opm_port_ipv6)
-		{
-			conf_report_error("%s overwrites existing port %hu",
-					confstr, yy_opm_port_ipv6);
-			return;
-		}
+        yy_opm_port_ipv4 = port;
+    } else {
+        if(yy_opm_port_ipv6) {
+            conf_report_error("%s overwrites existing port %hu",
+                              confstr, yy_opm_port_ipv6);
+            return;
+        }
 
-		yy_opm_port_ipv6 = port;
-	}
+        yy_opm_port_ipv6 = port;
+    }
 }
 
 static void
 conf_set_opm_listen_port_ipv4(void *data)
 {
-	conf_set_opm_listen_port_both(data, false);
+    conf_set_opm_listen_port_both(data, false);
 }
 
 static void
 conf_set_opm_listen_port_ipv6(void *data)
 {
-	conf_set_opm_listen_port_both(data, true);
+    conf_set_opm_listen_port_both(data, true);
 }
 
 static void
 conf_set_opm_listen_port(void *data)
 {
-	conf_set_opm_listen_port_both(data, true);
-	conf_set_opm_listen_port_both(data, false);
+    conf_set_opm_listen_port_both(data, true);
+    conf_set_opm_listen_port_both(data, false);
 }
 
 static void
 conf_set_opm_scan_ports_all(void *data, const char *node, const char *type)
 {
-	conf_parm_t *args = data;
-	for (; args; args = args->next)
-	{
-		rb_dlink_node *ptr;
-		bool dup = false;
+    conf_parm_t *args = data;
+    for (; args; args = args->next) {
+        rb_dlink_node *ptr;
+        bool dup = false;
 
-		if(CF_TYPE(args->type) != CF_INT)
-		{
-			conf_report_error("%s argument is not an integer -- ignoring.", node);
-			continue;
-		}
+        if(CF_TYPE(args->type) != CF_INT) {
+            conf_report_error("%s argument is not an integer -- ignoring.", node);
+            continue;
+        }
 
-		if(args->v.number > 65535 || args->v.number <= 0)
-		{
-			conf_report_error("%s argument is not an integer between 1 and 65535 -- ignoring.", node);
-			continue;
-		}
+        if(args->v.number > 65535 || args->v.number <= 0) {
+            conf_report_error("%s argument is not an integer between 1 and 65535 -- ignoring.", node);
+            continue;
+        }
 
-		/* Check for duplicates */
-		RB_DLINK_FOREACH(ptr, yy_opm_scanner_list.head)
-		{
-			struct opm_scanner *scanner = ptr->data;
+        /* Check for duplicates */
+        RB_DLINK_FOREACH(ptr, yy_opm_scanner_list.head) {
+            struct opm_scanner *scanner = ptr->data;
 
-			if(scanner->port == args->v.number && strcmp(type, scanner->type) == 0)
-			{
-				conf_report_error("%s argument is duplicate", node);
-				dup = true;
-				break;
-			}
-		}
+            if(scanner->port == args->v.number && strcmp(type, scanner->type) == 0) {
+                conf_report_error("%s argument is duplicate", node);
+                dup = true;
+                break;
+            }
+        }
 
-		if(!dup)
-		{
-			struct opm_scanner *scanner = rb_malloc(sizeof(struct opm_scanner));
-			scanner->port = args->v.number;
-			scanner->type = type;
-			rb_dlinkAdd(scanner, &scanner->node, &yy_opm_scanner_list);
-		}
-	}
+        if(!dup) {
+            struct opm_scanner *scanner = rb_malloc(sizeof(struct opm_scanner));
+            scanner->port = args->v.number;
+            scanner->type = type;
+            rb_dlinkAdd(scanner, &scanner->node, &yy_opm_scanner_list);
+        }
+    }
 }
 
 static void
 conf_set_opm_scan_ports_socks4(void *data)
 {
-	conf_set_opm_scan_ports_all(data, "opm::socks4_ports", "socks4");
+    conf_set_opm_scan_ports_all(data, "opm::socks4_ports", "socks4");
 }
 
 static void
 conf_set_opm_scan_ports_socks5(void *data)
 {
-	conf_set_opm_scan_ports_all(data, "opm::socks5_ports", "socks5");
+    conf_set_opm_scan_ports_all(data, "opm::socks5_ports", "socks5");
 }
 
 static void
 conf_set_opm_scan_ports_httpconnect(void *data)
 {
-	conf_set_opm_scan_ports_all(data, "opm::httpconnect_ports", "httpconnect");
+    conf_set_opm_scan_ports_all(data, "opm::httpconnect_ports", "httpconnect");
 }
 
 static void
 conf_set_opm_scan_ports_httpsconnect(void *data)
 {
-	conf_set_opm_scan_ports_all(data, "opm::httpsconnect_ports", "httpsconnect");
+    conf_set_opm_scan_ports_all(data, "opm::httpsconnect_ports", "httpsconnect");
 }
 
 /* public functions */
@@ -2347,238 +2177,226 @@ conf_set_opm_scan_ports_httpsconnect(void *data)
 void
 conf_report_error(const char *fmt, ...)
 {
-	va_list ap;
-	char msg[BUFSIZE + 1] = { 0 };
+    va_list ap;
+    char msg[BUFSIZE + 1] = { 0 };
 
-	va_start(ap, fmt);
-	vsnprintf(msg, sizeof msg, fmt, ap);
-	va_end(ap);
+    va_start(ap, fmt);
+    vsnprintf(msg, sizeof msg, fmt, ap);
+    va_end(ap);
 
-	if (testing_conf)
-	{
-		fprintf(stderr, "\"%s\", line %d: %s\n", current_file, lineno + 1, msg);
-		return;
-	}
+    if (testing_conf) {
+        fprintf(stderr, "\"%s\", line %d: %s\n", current_file, lineno + 1, msg);
+        return;
+    }
 
-	ierror("\"%s\", line %d: %s", current_file, lineno + 1, msg);
-	sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "error: \"%s\", line %d: %s", current_file, lineno + 1, msg);
+    ierror("\"%s\", line %d: %s", current_file, lineno + 1, msg);
+    sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "error: \"%s\", line %d: %s", current_file, lineno + 1, msg);
 }
 
 void
 conf_report_warning(const char *fmt, ...)
 {
-	va_list ap;
-	char msg[BUFSIZE + 1] = { 0 };
+    va_list ap;
+    char msg[BUFSIZE + 1] = { 0 };
 
-	va_start(ap, fmt);
-	vsnprintf(msg, sizeof msg, fmt, ap);
-	va_end(ap);
+    va_start(ap, fmt);
+    vsnprintf(msg, sizeof msg, fmt, ap);
+    va_end(ap);
 
-	if (testing_conf)
-	{
-		fprintf(stderr, "\"%s\", line %d: %s\n", current_file, lineno + 1, msg);
-		return;
-	}
+    if (testing_conf) {
+        fprintf(stderr, "\"%s\", line %d: %s\n", current_file, lineno + 1, msg);
+        return;
+    }
 
-	iwarn("\"%s\", line %d: %s", current_file, lineno + 1, msg);
-	sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "warning: \"%s\", line %d: %s", current_file, lineno + 1, msg);
+    iwarn("\"%s\", line %d: %s", current_file, lineno + 1, msg);
+    sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "warning: \"%s\", line %d: %s", current_file, lineno + 1, msg);
 }
 
 int
 conf_start_block(char *block, char *name)
 {
-	if((conf_cur_block = find_top_conf(block)) == NULL)
-	{
-		conf_report_error("Configuration block '%s' is not defined.", block);
-		return -1;
-	}
+    if((conf_cur_block = find_top_conf(block)) == NULL) {
+        conf_report_error("Configuration block '%s' is not defined.", block);
+        return -1;
+    }
 
-	if(name)
-		conf_cur_block_name = rb_strdup(name);
-	else
-		conf_cur_block_name = NULL;
+    if(name)
+        conf_cur_block_name = rb_strdup(name);
+    else
+        conf_cur_block_name = NULL;
 
-	if(conf_cur_block->tc_sfunc)
-		if(conf_cur_block->tc_sfunc(conf_cur_block) < 0)
-			return -1;
+    if(conf_cur_block->tc_sfunc)
+        if(conf_cur_block->tc_sfunc(conf_cur_block) < 0)
+            return -1;
 
-	return 0;
+    return 0;
 }
 
 int
 conf_end_block(struct TopConf *tc)
 {
-	int ret = 0;
-	if(tc->tc_efunc)
-		ret = tc->tc_efunc(tc);
+    int ret = 0;
+    if(tc->tc_efunc)
+        ret = tc->tc_efunc(tc);
 
-	rb_free(conf_cur_block_name);
-	conf_cur_block_name = NULL;
-	return ret;
+    rb_free(conf_cur_block_name);
+    conf_cur_block_name = NULL;
+    return ret;
 }
 
 static void
 conf_set_generic_int(void *data, void *location)
 {
-	*((int *) location) = *((unsigned int *) data);
+    *((int *) location) = *((unsigned int *) data);
 }
 
 static void
 conf_set_generic_string(void *data, int len, void *location)
 {
-	char **loc = location;
-	char *input = data;
+    char **loc = location;
+    char *input = data;
 
-	if(len && strlen(input) > (unsigned int)len)
-		input[len] = '\0';
+    if(len && strlen(input) > (unsigned int)len)
+        input[len] = '\0';
 
-	rb_free(*loc);
-	*loc = rb_strdup(input);
+    rb_free(*loc);
+    *loc = rb_strdup(input);
 }
 
 int
 conf_call_set(struct TopConf *tc, char *item, conf_parm_t * value)
 {
-	struct ConfEntry *cf;
-	conf_parm_t *cp;
+    struct ConfEntry *cf;
+    conf_parm_t *cp;
 
-	if(!tc)
-		return -1;
+    if(!tc)
+        return -1;
 
-	if((cf = find_conf_item(tc, item)) == NULL)
-	{
-		conf_report_error
-			("Non-existent configuration setting %s::%s.", tc->tc_name, (char *) item);
-		return -1;
-	}
+    if((cf = find_conf_item(tc, item)) == NULL) {
+        conf_report_error
+        ("Non-existent configuration setting %s::%s.", tc->tc_name, (char *) item);
+        return -1;
+    }
 
-	/* if it takes one thing, make sure they only passed one thing,
-	   and handle as needed. */
-	if((value->v.list->type & CF_FLIST) && !(cf->cf_type & CF_FLIST))
-	{
-		conf_report_error
-			("Option %s::%s does not take a list of values.", tc->tc_name, item);
-		return -1;
-	}
+    /* if it takes one thing, make sure they only passed one thing,
+       and handle as needed. */
+    if((value->v.list->type & CF_FLIST) && !(cf->cf_type & CF_FLIST)) {
+        conf_report_error
+        ("Option %s::%s does not take a list of values.", tc->tc_name, item);
+        return -1;
+    }
 
-	cp = value->v.list;
+    cp = value->v.list;
 
 
-	if(CF_TYPE(value->v.list->type) != CF_TYPE(cf->cf_type))
-	{
-		/* if it expects a string value, but we got a yesno,
-		 * convert it back
-		 */
-		if((CF_TYPE(value->v.list->type) == CF_YESNO) &&
-		   (CF_TYPE(cf->cf_type) == CF_STRING))
-		{
-			value->v.list->type = CF_STRING;
+    if(CF_TYPE(value->v.list->type) != CF_TYPE(cf->cf_type)) {
+        /* if it expects a string value, but we got a yesno,
+         * convert it back
+         */
+        if((CF_TYPE(value->v.list->type) == CF_YESNO) &&
+           (CF_TYPE(cf->cf_type) == CF_STRING)) {
+            value->v.list->type = CF_STRING;
 
-			if(cp->v.number == 1)
-				cp->v.string = rb_strdup("yes");
-			else
-				cp->v.string = rb_strdup("no");
-		}
+            if(cp->v.number == 1)
+                cp->v.string = rb_strdup("yes");
+            else
+                cp->v.string = rb_strdup("no");
+        }
 
-		/* maybe it's a CF_TIME and they passed CF_INT --
-		   should still be valid */
-		else if(!((CF_TYPE(value->v.list->type) == CF_INT) &&
-			  (CF_TYPE(cf->cf_type) == CF_TIME)))
-		{
-			conf_report_error
-				("Wrong type for %s::%s (expected %s, got %s)",
-				 tc->tc_name, (char *) item,
-				 conf_strtype(cf->cf_type), conf_strtype(value->v.list->type));
-			return -1;
-		}
-	}
+        /* maybe it's a CF_TIME and they passed CF_INT --
+           should still be valid */
+        else if(!((CF_TYPE(value->v.list->type) == CF_INT) &&
+                  (CF_TYPE(cf->cf_type) == CF_TIME))) {
+            conf_report_error
+            ("Wrong type for %s::%s (expected %s, got %s)",
+             tc->tc_name, (char *) item,
+             conf_strtype(cf->cf_type), conf_strtype(value->v.list->type));
+            return -1;
+        }
+    }
 
-	if(cf->cf_type & CF_FLIST)
-	{
+    if(cf->cf_type & CF_FLIST) {
 #if 0
-		if(cf->cf_arg)
-			conf_set_generic_list(value->v.list, cf->cf_arg);
-		else
+        if(cf->cf_arg)
+            conf_set_generic_list(value->v.list, cf->cf_arg);
+        else
 #endif
-		/* just pass it the extended argument list */
-		cf->cf_func(value->v.list);
-	}
-	else
-	{
-		/* it's old-style, needs only one arg */
-		switch (cf->cf_type)
-		{
-		case CF_INT:
-		case CF_TIME:
-		case CF_YESNO:
-			if(cf->cf_arg)
-				conf_set_generic_int(&cp->v.number, cf->cf_arg);
-			else
-				cf->cf_func(&cp->v.number);
-			break;
-		case CF_STRING:
-		case CF_QSTRING:
-			if(EmptyString(cp->v.string))
-				conf_report_error("Ignoring %s::%s -- empty field",
-						tc->tc_name, item);
-			else if(cf->cf_arg)
-				conf_set_generic_string(cp->v.string, cf->cf_len, cf->cf_arg);
-			else
-				cf->cf_func(cp->v.string);
-			break;
-		}
-	}
+            /* just pass it the extended argument list */
+            cf->cf_func(value->v.list);
+    } else {
+        /* it's old-style, needs only one arg */
+        switch (cf->cf_type) {
+        case CF_INT:
+        case CF_TIME:
+        case CF_YESNO:
+            if(cf->cf_arg)
+                conf_set_generic_int(&cp->v.number, cf->cf_arg);
+            else
+                cf->cf_func(&cp->v.number);
+            break;
+        case CF_STRING:
+        case CF_QSTRING:
+            if(EmptyString(cp->v.string))
+                conf_report_error("Ignoring %s::%s -- empty field",
+                                  tc->tc_name, item);
+            else if(cf->cf_arg)
+                conf_set_generic_string(cp->v.string, cf->cf_len, cf->cf_arg);
+            else
+                cf->cf_func(cp->v.string);
+            break;
+        }
+    }
 
 
-	return 0;
+    return 0;
 }
 
 int
 add_conf_item(const char *topconf, const char *name, int type, void (*func) (void *))
 {
-	struct TopConf *tc;
-	struct ConfEntry *cf;
+    struct TopConf *tc;
+    struct ConfEntry *cf;
 
-	if((tc = find_top_conf(topconf)) == NULL)
-		return -1;
+    if((tc = find_top_conf(topconf)) == NULL)
+        return -1;
 
-	if(find_conf_item(tc, name) != NULL)
-		return -1;
+    if(find_conf_item(tc, name) != NULL)
+        return -1;
 
-	cf = rb_malloc(sizeof(struct ConfEntry));
+    cf = rb_malloc(sizeof(struct ConfEntry));
 
-	cf->cf_name = name;
-	cf->cf_type = type;
-	cf->cf_func = func;
-	cf->cf_arg = NULL;
+    cf->cf_name = name;
+    cf->cf_type = type;
+    cf->cf_func = func;
+    cf->cf_arg = NULL;
 
-	rb_dlinkAddAlloc(cf, &tc->tc_items);
-	conf_changed = true;
+    rb_dlinkAddAlloc(cf, &tc->tc_items);
+    conf_changed = true;
 
-	return 0;
+    return 0;
 }
 
 int
 remove_conf_item(const char *topconf, const char *name)
 {
-	struct TopConf *tc;
-	struct ConfEntry *cf;
-	rb_dlink_node *ptr;
+    struct TopConf *tc;
+    struct ConfEntry *cf;
+    rb_dlink_node *ptr;
 
-	if((tc = find_top_conf(topconf)) == NULL)
-		return -1;
+    if((tc = find_top_conf(topconf)) == NULL)
+        return -1;
 
-	if((cf = find_conf_item(tc, name)) == NULL)
-		return -1;
+    if((cf = find_conf_item(tc, name)) == NULL)
+        return -1;
 
-	if((ptr = rb_dlinkFind(cf, &tc->tc_items)) == NULL)
-		return -1;
+    if((ptr = rb_dlinkFind(cf, &tc->tc_items)) == NULL)
+        return -1;
 
-	rb_dlinkDestroy(ptr, &tc->tc_items);
-	rb_free(cf);
-	conf_changed = true;
+    rb_dlinkDestroy(ptr, &tc->tc_items);
+    rb_free(cf);
+    conf_changed = true;
 
-	return 0;
+    return 0;
 }
 
 /* *INDENT-OFF* */
@@ -2840,72 +2658,72 @@ static struct ConfEntry conf_serverhide_table[] =
 void
 newconf_init()
 {
-	add_top_conf("modules", NULL, NULL, NULL);
-	add_conf_item("modules", "path", CF_QSTRING, conf_set_modules_path);
-	add_conf_item("modules", "module", CF_QSTRING, conf_set_modules_module);
+    add_top_conf("modules", NULL, NULL, NULL);
+    add_conf_item("modules", "path", CF_QSTRING, conf_set_modules_path);
+    add_conf_item("modules", "module", CF_QSTRING, conf_set_modules_module);
 
-	add_top_conf("serverinfo", NULL, NULL, conf_serverinfo_table);
-	add_top_conf("admin", NULL, NULL, conf_admin_table);
-	add_top_conf("log", NULL, NULL, conf_log_table);
-	add_top_conf("operator", conf_begin_oper, conf_end_oper, conf_operator_table);
-	add_top_conf("class", conf_begin_class, conf_end_class, conf_class_table);
-	add_top_conf("privset", NULL, NULL, conf_privset_table);
+    add_top_conf("serverinfo", NULL, NULL, conf_serverinfo_table);
+    add_top_conf("admin", NULL, NULL, conf_admin_table);
+    add_top_conf("log", NULL, NULL, conf_log_table);
+    add_top_conf("operator", conf_begin_oper, conf_end_oper, conf_operator_table);
+    add_top_conf("class", conf_begin_class, conf_end_class, conf_class_table);
+    add_top_conf("privset", NULL, NULL, conf_privset_table);
 
-	add_top_conf("listen", conf_begin_listen, conf_end_listen, NULL);
-	add_conf_item("listen", "defer_accept", CF_YESNO, conf_set_listen_defer_accept);
-	add_conf_item("listen", "port", CF_INT | CF_FLIST, conf_set_listen_port);
-	add_conf_item("listen", "sslport", CF_INT | CF_FLIST, conf_set_listen_sslport);
-	add_conf_item("listen", "sctp_port", CF_INT | CF_FLIST, conf_set_listen_sctp_port);
-	add_conf_item("listen", "sctp_sslport", CF_INT | CF_FLIST, conf_set_listen_sctp_sslport);
-	add_conf_item("listen", "ip", CF_QSTRING, conf_set_listen_address);
-	add_conf_item("listen", "host", CF_QSTRING, conf_set_listen_address);
+    add_top_conf("listen", conf_begin_listen, conf_end_listen, NULL);
+    add_conf_item("listen", "defer_accept", CF_YESNO, conf_set_listen_defer_accept);
+    add_conf_item("listen", "port", CF_INT | CF_FLIST, conf_set_listen_port);
+    add_conf_item("listen", "sslport", CF_INT | CF_FLIST, conf_set_listen_sslport);
+    add_conf_item("listen", "sctp_port", CF_INT | CF_FLIST, conf_set_listen_sctp_port);
+    add_conf_item("listen", "sctp_sslport", CF_INT | CF_FLIST, conf_set_listen_sctp_sslport);
+    add_conf_item("listen", "ip", CF_QSTRING, conf_set_listen_address);
+    add_conf_item("listen", "host", CF_QSTRING, conf_set_listen_address);
 
-	add_top_conf("auth", conf_begin_auth, conf_end_auth, conf_auth_table);
+    add_top_conf("auth", conf_begin_auth, conf_end_auth, conf_auth_table);
 
-	add_top_conf("connect", conf_begin_connect, conf_end_connect, conf_connect_table);
+    add_top_conf("connect", conf_begin_connect, conf_end_connect, conf_connect_table);
 
-	add_top_conf("exempt", NULL, NULL, NULL);
-	add_conf_item("exempt", "ip", CF_QSTRING, conf_set_exempt_ip);
+    add_top_conf("exempt", NULL, NULL, NULL);
+    add_conf_item("exempt", "ip", CF_QSTRING, conf_set_exempt_ip);
 
-	add_top_conf("secure", NULL, NULL, NULL);
-	add_conf_item("secure", "ip", CF_QSTRING, conf_set_secure_ip);
+    add_top_conf("secure", NULL, NULL, NULL);
+    add_conf_item("secure", "ip", CF_QSTRING, conf_set_secure_ip);
 
-	add_top_conf("cluster", conf_cleanup_cluster, conf_cleanup_cluster, NULL);
-	add_conf_item("cluster", "name", CF_QSTRING, conf_set_cluster_name);
-	add_conf_item("cluster", "flags", CF_STRING | CF_FLIST, conf_set_cluster_flags);
+    add_top_conf("cluster", conf_cleanup_cluster, conf_cleanup_cluster, NULL);
+    add_conf_item("cluster", "name", CF_QSTRING, conf_set_cluster_name);
+    add_conf_item("cluster", "flags", CF_STRING | CF_FLIST, conf_set_cluster_flags);
 
-	add_top_conf("general", NULL, NULL, conf_general_table);
-	add_top_conf("channel", NULL, NULL, conf_channel_table);
-	add_top_conf("serverhide", NULL, NULL, conf_serverhide_table);
+    add_top_conf("general", NULL, NULL, conf_general_table);
+    add_top_conf("channel", NULL, NULL, conf_channel_table);
+    add_top_conf("serverhide", NULL, NULL, conf_serverhide_table);
 
-	add_top_conf("service", NULL, NULL, NULL);
-	add_conf_item("service", "name", CF_QSTRING, conf_set_service_name);
+    add_top_conf("service", NULL, NULL, NULL);
+    add_conf_item("service", "name", CF_QSTRING, conf_set_service_name);
 
-	add_top_conf("alias", conf_begin_alias, conf_end_alias, NULL);
-	add_conf_item("alias", "name", CF_QSTRING, conf_set_alias_name);
-	add_conf_item("alias", "target", CF_QSTRING, conf_set_alias_target);
+    add_top_conf("alias", conf_begin_alias, conf_end_alias, NULL);
+    add_conf_item("alias", "name", CF_QSTRING, conf_set_alias_name);
+    add_conf_item("alias", "target", CF_QSTRING, conf_set_alias_target);
 
-	add_top_conf("dnsbl", NULL, NULL, NULL);
-	add_conf_item("dnsbl", "host", CF_QSTRING, conf_set_dnsbl_entry_host);
-	add_conf_item("dnsbl", "type", CF_STRING | CF_FLIST, conf_set_dnsbl_entry_type);
-	add_conf_item("dnsbl", "matches", CF_QSTRING | CF_FLIST, conf_set_dnsbl_entry_matches);
-	add_conf_item("dnsbl", "reject_reason", CF_QSTRING, conf_set_dnsbl_entry_reason);
+    add_top_conf("dnsbl", NULL, NULL, NULL);
+    add_conf_item("dnsbl", "host", CF_QSTRING, conf_set_dnsbl_entry_host);
+    add_conf_item("dnsbl", "type", CF_STRING | CF_FLIST, conf_set_dnsbl_entry_type);
+    add_conf_item("dnsbl", "matches", CF_QSTRING | CF_FLIST, conf_set_dnsbl_entry_matches);
+    add_conf_item("dnsbl", "reject_reason", CF_QSTRING, conf_set_dnsbl_entry_reason);
 
-	add_top_conf("blacklist", conf_warn_blacklist_deprecation, NULL, NULL);
-	add_conf_item("blacklist", "host", CF_QSTRING, conf_set_dnsbl_entry_host);
-	add_conf_item("blacklist", "type", CF_STRING | CF_FLIST, conf_set_dnsbl_entry_type);
-	add_conf_item("blacklist", "matches", CF_QSTRING | CF_FLIST, conf_set_dnsbl_entry_matches);
-	add_conf_item("blacklist", "reject_reason", CF_QSTRING, conf_set_dnsbl_entry_reason);
+    add_top_conf("blacklist", conf_warn_blacklist_deprecation, NULL, NULL);
+    add_conf_item("blacklist", "host", CF_QSTRING, conf_set_dnsbl_entry_host);
+    add_conf_item("blacklist", "type", CF_STRING | CF_FLIST, conf_set_dnsbl_entry_type);
+    add_conf_item("blacklist", "matches", CF_QSTRING | CF_FLIST, conf_set_dnsbl_entry_matches);
+    add_conf_item("blacklist", "reject_reason", CF_QSTRING, conf_set_dnsbl_entry_reason);
 
-	add_top_conf("opm", conf_begin_opm, conf_end_opm, NULL);
-	add_conf_item("opm", "timeout", CF_INT, conf_set_opm_timeout);
-	add_conf_item("opm", "listen_ipv4", CF_QSTRING, conf_set_opm_listen_address_ipv4);
-	add_conf_item("opm", "listen_ipv6", CF_QSTRING, conf_set_opm_listen_address_ipv6);
-	add_conf_item("opm", "port_v4", CF_INT, conf_set_opm_listen_port_ipv4);
-	add_conf_item("opm", "port_v6", CF_INT, conf_set_opm_listen_port_ipv6);
-	add_conf_item("opm", "listen_port", CF_INT, conf_set_opm_listen_port);
-	add_conf_item("opm", "socks4_ports", CF_INT | CF_FLIST, conf_set_opm_scan_ports_socks4);
-	add_conf_item("opm", "socks5_ports", CF_INT | CF_FLIST, conf_set_opm_scan_ports_socks5);
-	add_conf_item("opm", "httpconnect_ports", CF_INT | CF_FLIST, conf_set_opm_scan_ports_httpconnect);
-	add_conf_item("opm", "httpsconnect_ports", CF_INT | CF_FLIST, conf_set_opm_scan_ports_httpsconnect);
+    add_top_conf("opm", conf_begin_opm, conf_end_opm, NULL);
+    add_conf_item("opm", "timeout", CF_INT, conf_set_opm_timeout);
+    add_conf_item("opm", "listen_ipv4", CF_QSTRING, conf_set_opm_listen_address_ipv4);
+    add_conf_item("opm", "listen_ipv6", CF_QSTRING, conf_set_opm_listen_address_ipv6);
+    add_conf_item("opm", "port_v4", CF_INT, conf_set_opm_listen_port_ipv4);
+    add_conf_item("opm", "port_v6", CF_INT, conf_set_opm_listen_port_ipv6);
+    add_conf_item("opm", "listen_port", CF_INT, conf_set_opm_listen_port);
+    add_conf_item("opm", "socks4_ports", CF_INT | CF_FLIST, conf_set_opm_scan_ports_socks4);
+    add_conf_item("opm", "socks5_ports", CF_INT | CF_FLIST, conf_set_opm_scan_ports_socks5);
+    add_conf_item("opm", "httpconnect_ports", CF_INT | CF_FLIST, conf_set_opm_scan_ports_httpconnect);
+    add_conf_item("opm", "httpsconnect_ports", CF_INT | CF_FLIST, conf_set_opm_scan_ports_httpsconnect);
 }
