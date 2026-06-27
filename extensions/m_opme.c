@@ -76,7 +76,7 @@ mo_opme(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	{
 		msptr = ptr->data;
 
-		if(is_chanop(msptr))
+		if(is_any_op(msptr))
 		{
 			sendto_one_notice(source_p, ":%s Channel is not opless", parv[1]);
 			return;
