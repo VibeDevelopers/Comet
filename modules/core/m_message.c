@@ -480,8 +480,10 @@ build_target_list(enum message_type msgtype, struct Client *client_p,
 		{
 			if(*nick == '@')
 				type |= CHFL_CHANOP;
+			else if(*nick == '%')
+				type |= CHFL_CHANOP | CHFL_HALFOP;
 			else if(*nick == '+')
-				type |= CHFL_CHANOP | CHFL_VOICE;
+				type |= CHFL_CHANOP | CHFL_HALFOP | CHFL_VOICE;
 			else
 				break;
 			nick++;
@@ -507,7 +509,8 @@ build_target_list(enum message_type msgtype, struct Client *client_p,
 
 				msptr = find_channel_membership(chptr, source_p);
 
-				if(!IsServer(source_p) && !IsService(source_p) && !is_chanop_voiced(msptr))
+				if(!IsServer(source_p) && !IsService(source_p) &&
+				   !(msptr && msptr->flags & (CHFL_CHANOP | CHFL_HALFOP | CHFL_VOICE)))
 				{
 					sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
 						   get_id(&me, source_p),
@@ -868,8 +871,13 @@ msg_channel_flags(enum message_type msgtype, struct Client *client_p,
 
 	if(flags & CHFL_VOICE)
 	{
-		type = ONLY_CHANOPSVOICED;
+		type = ONLY_CHANOPSHALFOPSVOICED;
 		c = '+';
+	}
+	else if(flags & CHFL_HALFOP)
+	{
+		type = ONLY_CHANOPSHALFOPS;
+		c = '%';
 	}
 	else
 	{
