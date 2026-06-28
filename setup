@@ -22,38 +22,47 @@ if [ $# -eq 1 ] && [ "$1" = "help" ]; then
     echo ""
     echo "Available options (from meson_options.txt):"
     echo ""
-    # meson introspect --buildoptions requires a configured build dir.
-    # Parse meson_options.txt directly instead — portable and instant.
     OPTFILE="$(dirname "$0")/meson_options.txt"
     [ -f "$OPTFILE" ] || die "meson_options.txt not found"
     awk '
+        { gsub(/\r/, ""); line = $0 }
         /option\(/ {
-            # extract name
-            match($0, /option\(\x27([^\x27]+)\x27/, a)
-            name = a[1]
-            desc = ""; defval = ""; choices = ""
+            block = line
+            next
         }
-        /description\s*:/ {
-            match($0, /description\s*:\s*\x27([^\x27]*)\x27/, a)
-            desc = a[1]
+        block != "" {
+            block = block " " line
         }
-        /value\s*:/ {
-            match($0, /value\s*:\s*\x27([^\x27]*)\x27/, a)
-            if (a[1] != "") defval = a[1]
-            match($0, /value\s*:\s*([0-9]+)/, b)
-            if (b[1] != "") defval = b[1]
-            match($0, /value\s*:\s*(true|false)/, c)
-            if (c[1] != "") defval = c[1]
-        }
-        /choices\s*:/ {
-            match($0, /choices\s*:\s*\[([^\]]+)\]/, a)
-            choices = a[1]
-        }
-        /\)/ && name != "" {
+        block != "" && /\)/ {
+            # name
+            s = block; sub(/.*option\('"'"'/, "", s); sub(/'"'"'.*/, "", s)
+            name = s
+
+            # description
+            s = block; sub(/.*description:[[:space:]]*'"'"'/, "", s); sub(/'"'"'.*/, "", s)
+            desc = s
+
+            # default value (string/boolean/feature)
+            defval = ""
+            s = block
+            if (match(s, /value:[[:space:]]*'"'"'[^'"'"']*'"'"'/)) {
+                v = substr(s, RSTART, RLENGTH)
+                sub(/value:[[:space:]]*'"'"'/, "", v); sub(/'"'"'.*/, "", v)
+                defval = v
+            } else if (match(s, /value:[[:space:]]*[0-9]+/)) {
+                v = substr(s, RSTART, RLENGTH)
+                sub(/value:[[:space:]]*/, "", v)
+                defval = v
+            } else if (match(s, /value:[[:space:]]*(true|false)/)) {
+                v = substr(s, RSTART, RLENGTH)
+                sub(/value:[[:space:]]*/, "", v)
+                defval = v
+            }
+
             printf "  %-20s %s", name, desc
             if (defval != "") printf " (default: %s)", defval
-            if (choices != "") printf " [%s]", choices
             printf "\n"
+            block = ""
             name = ""
         }
     ' "$OPTFILE"
