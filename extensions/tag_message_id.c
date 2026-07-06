@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * tag_message_id.c: implement the message-ids IRCv3 specification
  *
  * Copyright (c) 2025 Ryan Schmidt <skizzerz@skizzerz.net>

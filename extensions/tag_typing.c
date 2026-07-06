@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * tag_typing.c: implement the IRCv3 +typing client tag
  *
  * Copyright (c) 2025 Ryan Schmidt <skizzerz@skizzerz.net>

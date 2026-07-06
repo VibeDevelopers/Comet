@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * cap_account_tag.c: implement the account-tag IRCv3.2 capability
  *
  * Copyright (c) 2016 Ariadne Conill <ariadne@dereferenced.org>

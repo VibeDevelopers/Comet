@@ -1,5 +1,5 @@
 /*
- *  Solanum: a slightly advanced ircd
+ *  Comet: a slightly advanced ircd
  *  client_tags.c: client tags support
  *
  * Copyright (C) 2022 Ryan Lahfa

@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * privilege.h: Dynamic privileges API.
  *
  * Copyright (c) 2021 Ed Kellett <e@kellett.im>

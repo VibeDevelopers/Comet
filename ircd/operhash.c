@@ -1,4 +1,4 @@
-/* solanum
+/* comet
  * operhash.c - Hashes nick!user@host{oper}
  *
  * Copyright (C) 2005 Lee Hardy <lee -at- leeh.co.uk>

@@ -1,5 +1,5 @@
 /*
- *  Solanum: a slightly advanced ircd
+ *  Comet: a slightly advanced ircd
  *  sno_routing.c: Shows notices about netjoins and netsplits
  *
  *  Copyright (c) 2005-2006 Jilles Tjoelker <jilles-at-stack.nl>

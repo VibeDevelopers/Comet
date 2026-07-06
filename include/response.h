@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * response.h: header for labeled-response support
  *
  * Copyright (c) 2026 Ryan Schmidt <skizzerz@skizzerz.net>

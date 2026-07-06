@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  *
  * Copyright (C) 2012 Keith Buck <mr_flea@esper.net>
  *

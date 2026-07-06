@@ -728,7 +728,7 @@ Hook data: `char[256]`
 
 See doc/server-version-info.txt for more information on what each character
 in this response represents. The hook data is pre-filled with the default
-options supported by solanum according to the referenced document. Modules can
+options supported by comet according to the referenced document. Modules can
 set members of the array to 1 (or any other nonzero value) to have the
 associated character show up in the VERSION response. Setting the value to 0
 will cause the associated character to be omitted from the VERSION response.

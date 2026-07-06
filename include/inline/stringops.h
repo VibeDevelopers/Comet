@@ -1,5 +1,5 @@
 /*
- *  Solanum: a slightly advanced ircd
+ *  Comet: a slightly advanced ircd
  *  inline/stringops.h: inlined string operations used in a few places
  *
  *  Copyright (c) 2005-2008 charybdis development team

@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * tag_channel_context.c: implement the IRCv3 +channel-context client tag
  *
  * Copyright (c) 2026 Ryan Schmidt <skizzerz@skizzerz.net>

@@ -97,8 +97,8 @@ struct mapi_mheader_av1
 };
 
 #define MAPI_ORIGIN_UNKNOWN	0		/* Unknown provenance (AV1 etc.) */
-#define MAPI_ORIGIN_EXTENSION	1		/* Solanum extension */
-#define MAPI_ORIGIN_CORE	2		/* Solanum core module */
+#define MAPI_ORIGIN_EXTENSION	1		/* Comet extension */
+#define MAPI_ORIGIN_CORE	2		/* Comet core module */
 
 struct mapi_mheader_av2
 {

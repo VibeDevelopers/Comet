@@ -41,7 +41,7 @@
 #include <ltdl.h>
 
 #ifndef LT_MODULE_EXT
-#	error "Solanum requires loadable module support."
+#	error "Comet requires loadable module support."
 #endif
 
 struct module_dentry

@@ -1,7 +1,7 @@
 BATCH support documentation
 ========================================
 
-Portions of BATCH are supported in solanum core, whereas other portions are
+Portions of BATCH are supported in comet core, whereas other portions are
 implemented via the m_batch module. The portions in core are sufficient for
 server-initiated batches sent to locally-connected clients. The module
 implements client-initiated batches as well as batches that are propagated

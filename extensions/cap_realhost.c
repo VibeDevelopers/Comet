@@ -25,7 +25,7 @@
 #include <client.h>
 #include <msgbuf.h>
 
-static char cap_realhost_desc[] = "Provides the solanum.chat/realhost oper-only capability";
+static char cap_realhost_desc[] = "Provides the comet.chat/realhost oper-only capability";
 
 static bool cap_oper_realhost_visible(struct Client *);
 static void cap_realhost_outbound_msgbuf(void *);
@@ -40,7 +40,7 @@ static struct ClientCapability capdata_oper_realhost = {
 };
 
 mapi_cap_list_av2 cap_realhost_caps[] = {
-	{ MAPI_CAP_CLIENT, "solanum.chat/realhost", NULL, &CLICAP_REALHOST },
+	{ MAPI_CAP_CLIENT, "comet.chat/realhost", NULL, &CLICAP_REALHOST },
 	{ MAPI_CAP_CLIENT, "?oper_realhost", &capdata_oper_realhost, &CLICAP_OPER_REALHOST },
 	{ 0, NULL, NULL, NULL },
 };
@@ -69,12 +69,12 @@ cap_realhost_outbound_msgbuf(void *data_)
 
 	if (!IsIPSpoof(data->source) && !EmptyString(data->source->sockhost) && strcmp(data->source->sockhost, "0"))
 	{
-		msgbuf_append_tag(msgbuf, "solanum.chat/ip", data->source->sockhost,
+		msgbuf_append_tag(msgbuf, "comet.chat/ip", data->source->sockhost,
 				IsDynSpoof(data->source) ? CLICAP_OPER_REALHOST : CLICAP_REALHOST);
 	}
 
 	if (!EmptyString(data->source->orighost))
-		msgbuf_append_tag(msgbuf, "solanum.chat/realhost", data->source->orighost, CLICAP_OPER_REALHOST);
+		msgbuf_append_tag(msgbuf, "comet.chat/realhost", data->source->orighost, CLICAP_OPER_REALHOST);
 }
 
 static inline void

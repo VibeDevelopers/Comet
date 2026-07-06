@@ -1,5 +1,5 @@
 /*
- *  solanum: Advanced, scalable Internet Relay Chat.
+ *  comet: Advanced, scalable Internet Relay Chat.
  *  s_conf.h: A header for the configuration functions.
  *
  *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center

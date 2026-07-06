@@ -966,7 +966,7 @@ main(int argc, char **argv)
 	if(s_ctlfd == NULL || s_pipe == NULL || s_pid == NULL)
 	{
 		fprintf(stderr,
-			"This is the solanum ssld for internal ircd use.\n");
+			"This is the comet ssld for internal ircd use.\n");
 		fprintf(stderr,
 			"You aren't supposed to run me directly. Exiting.\n");
 		exit(1);

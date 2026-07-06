@@ -1,5 +1,5 @@
 /*
- *  solanum
+ *  comet
  *  authproc.h: A header with the authd functions.
  *
  *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center

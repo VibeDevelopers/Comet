@@ -12,7 +12,7 @@ bandb = executable('bandb',
   install_rpath: rpath,
 )
 
-bantool = executable('solanum-bantool',
+bantool = executable('comet-bantool',
   ['bantool.c'] + bandb_common_sources,
   dependencies: [librb_dep, sqlite3_dep],
   include_directories: include_directories('../include'),

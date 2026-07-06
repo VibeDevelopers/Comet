@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * tgchange.c - code for restricting private messages
  *
  * Copyright (C) 2004-2005 Lee Hardy <lee@leeh.co.uk>

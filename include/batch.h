@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * batch.h: support functions for batches
  *
  * Copyright (c) 2025 Ryan Schmidt <skizzerz@skizzerz.net>

@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * substitution.c: parses substitution-keyword expansions
  *
  * Copyright (c) 2006-2007 Ariadne Conill <ariadne@dereferenced.org>

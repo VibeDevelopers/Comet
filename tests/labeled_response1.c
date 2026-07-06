@@ -366,14 +366,14 @@ static void remote_response__hunted_server(void)
 	snprintf(expected, sizeof(expected), "@label=foo :%s BATCH +%s labeled-response" CRLF, me.name, batch1);
 	is_client_sendq(expected, user, MSG);
 	snprintf(expected, sizeof(expected),
-		"@time=" ADVENTURE_TIME ";solanum.chat/response=%s,%s,%s :%s TIME :" TEST_SERVER_ID CRLF,
+		"@time=" ADVENTURE_TIME ";comet.chat/response=%s,%s,%s :%s TIME :" TEST_SERVER_ID CRLF,
 		user->id, batch1, server->name, user->id);
 	is_client_sendq(expected, server, MSG);
 	is_int(1, rb_dictionary_size(dict), MSG);
 	is_int(1, rb_dlink_list_length(&user->localClient->pending_remote_responses), MSG);
 
 	snprintf(expected, sizeof(expected),
-		"@solanum.chat/response=%s,%s,%s :%s 391 %s %s :Friday July 14 2017 -- 02:40:00 +00:00" CRLF,
+		"@comet.chat/response=%s,%s,%s :%s 391 %s %s :Friday July 14 2017 -- 02:40:00 +00:00" CRLF,
 		user->id, batch1, server->name, server->id, user->id, server->name);
 	client_util_parse(server, expected);
 	snprintf(expected, sizeof(expected),
@@ -383,7 +383,7 @@ static void remote_response__hunted_server(void)
 	is_int(1, rb_dictionary_size(dict), MSG);
 	is_int(1, rb_dlink_list_length(&user->localClient->pending_remote_responses), MSG);
 
-	snprintf(expected, sizeof(expected), "@solanum.chat/response=%s,%s,%s :%s ENCAP %s ACK", user->id, batch1, server->name, server->id, me.name);
+	snprintf(expected, sizeof(expected), "@comet.chat/response=%s,%s,%s :%s ENCAP %s ACK", user->id, batch1, server->name, server->id, me.name);
 	client_util_parse(server, expected);
 	snprintf(expected, sizeof(expected), ":%s BATCH -%s" CRLF, me.name, batch1);
 	is_client_sendq(expected, user, MSG);
@@ -405,7 +405,7 @@ static void remote_response__hunted_client(void)
 	snprintf(expected, sizeof(expected), "@label=foo :%s BATCH +%s labeled-response" CRLF, me.name, batch1);
 	is_client_sendq(expected, user, MSG);
 	snprintf(expected, sizeof(expected),
-		"@time=" ADVENTURE_TIME ";solanum.chat/response=%s,%s,%s :%s TIME :" TEST_REMOTE_ID CRLF,
+		"@time=" ADVENTURE_TIME ";comet.chat/response=%s,%s,%s :%s TIME :" TEST_REMOTE_ID CRLF,
 		user->id, batch1, server->name, user->id);
 	is_client_sendq(expected, server, MSG);
 	is_int(1, rb_dictionary_size(dict), MSG);
@@ -413,7 +413,7 @@ static void remote_response__hunted_client(void)
 	is_int(1, ((struct ResponseInfo *)user->localClient->pending_remote_responses.head->data)->remote_response, MSG);
 
 	snprintf(expected, sizeof(expected),
-		"@solanum.chat/response=%s,%s,%s :%s 391 %s %s :Friday July 14 2017 -- 02:40:00 +00:00" CRLF,
+		"@comet.chat/response=%s,%s,%s :%s 391 %s %s :Friday July 14 2017 -- 02:40:00 +00:00" CRLF,
 		user->id, batch1, server->name, server->id, user->id, server->name);
 	client_util_parse(server, expected);
 	snprintf(expected, sizeof(expected),
@@ -423,7 +423,7 @@ static void remote_response__hunted_client(void)
 	is_int(1, rb_dictionary_size(dict), MSG);
 	is_int(1, rb_dlink_list_length(&user->localClient->pending_remote_responses), MSG);
 
-	snprintf(expected, sizeof(expected), "@solanum.chat/response=%s,%s,%s :%s ENCAP %s ACK", user->id, batch1, server->name, server->id, me.name);
+	snprintf(expected, sizeof(expected), "@comet.chat/response=%s,%s,%s :%s ENCAP %s ACK", user->id, batch1, server->name, server->id, me.name);
 	client_util_parse(server, expected);
 	snprintf(expected, sizeof(expected), ":%s BATCH -%s" CRLF, me.name, batch1);
 	is_client_sendq(expected, user, MSG);
@@ -446,18 +446,18 @@ static void remote_response__mask(void)
 	snprintf(expected, sizeof(expected), "@label=foo :%s BATCH +%s labeled-response" CRLF, me.name, batch1);
 	is_client_sendq(expected, user, MSG);
 	snprintf(expected, sizeof(expected),
-		"@time=" ADVENTURE_TIME ";solanum.chat/response=%s,%s,remote* :%s ENCAP remote* MODLIST foo" CRLF,
+		"@time=" ADVENTURE_TIME ";comet.chat/response=%s,%s,remote* :%s ENCAP remote* MODLIST foo" CRLF,
 		user->id, batch1, user->id);
 	is_client_sendq(expected, server, MSG);
 	is_int(1, rb_dictionary_size(dict), MSG);
 	is_int(1, rb_dlink_list_length(&user->localClient->pending_remote_responses), MSG);
 	is_int(3, ((struct ResponseInfo *)user->localClient->pending_remote_responses.head->data)->remote_response, MSG);
 
-	snprintf(expected, sizeof(expected), "@solanum.chat/response=%s,%s,remote* :%s ENCAP %s ACK", user->id, batch1, server->id, me.name);
+	snprintf(expected, sizeof(expected), "@comet.chat/response=%s,%s,remote* :%s ENCAP %s ACK", user->id, batch1, server->id, me.name);
 	client_util_parse(server, expected);
-	snprintf(expected, sizeof(expected), "@solanum.chat/response=%s,%s,remote* :%s ENCAP %s ACK", user->id, batch1, server2->id, me.name);
+	snprintf(expected, sizeof(expected), "@comet.chat/response=%s,%s,remote* :%s ENCAP %s ACK", user->id, batch1, server2->id, me.name);
 	client_util_parse(server2, expected);
-	snprintf(expected, sizeof(expected), "@solanum.chat/response=%s,%s,remote* :%s ENCAP %s ACK", user->id, batch1, server3->id, me.name);
+	snprintf(expected, sizeof(expected), "@comet.chat/response=%s,%s,remote* :%s ENCAP %s ACK", user->id, batch1, server3->id, me.name);
 	client_util_parse(server3, expected);
 
 	snprintf(expected, sizeof(expected), ":%s BATCH -%s" CRLF, me.name, batch1);
@@ -493,13 +493,13 @@ static void remote_response__timeout(void)
 
 	/* late response doesn't carry batch tag and late ACK does nothing */
 	snprintf(expected, sizeof(expected),
-		"@solanum.chat/response=%s,%s,%s :%s 318 %s %s :End of /WHOIS list.",
+		"@comet.chat/response=%s,%s,%s :%s 318 %s %s :End of /WHOIS list.",
 		user->id, batch1, server->name, server->id, user->name, remote->name);
 	client_util_parse(server, expected);
 	snprintf(expected, sizeof(expected), ":%s 318 %s %s :End of /WHOIS list." CRLF, server->name, user->name, remote->name);
 	is_client_sendq(expected, user, MSG);
 	snprintf(expected, sizeof(expected),
-		"@solanum.chat/response=%s,%s,%s :%s ENCAP %s ACK",
+		"@comet.chat/response=%s,%s,%s :%s ENCAP %s ACK",
 		user->id, batch1, server->name, server->id, me.name);
 	client_util_parse(server, expected);
 	is_client_sendq_empty(user, MSG);
@@ -514,34 +514,34 @@ static void response_tag(void)
 	standard_init();
 
 	/* if we match the mask (3rd part of the tag), we need to send back ENCAP ACK */
-	client_util_parse(server, "@solanum.chat/response=" TEST_REMOTE_ID ",foo,* :" TEST_REMOTE_ID " TIME :" TEST_ME_ID);
+	client_util_parse(server, "@comet.chat/response=" TEST_REMOTE_ID ",foo,* :" TEST_REMOTE_ID " TIME :" TEST_ME_ID);
 	snprintf(expected, sizeof(expected),
-		"@time=" ADVENTURE_TIME ";solanum.chat/response=%s,foo,* :%s 391 %s %s :Friday July 14 2017 -- 02:40:00 +00:00" CRLF,
+		"@time=" ADVENTURE_TIME ";comet.chat/response=%s,foo,* :%s 391 %s %s :Friday July 14 2017 -- 02:40:00 +00:00" CRLF,
 		remote->id, me.id, remote->id, me.name);
 	is_client_sendq_one(expected, server, MSG);
 	snprintf(expected, sizeof(expected),
-		"@time=" ADVENTURE_TIME ";solanum.chat/response=%s,foo,* :%s ENCAP %s ACK" CRLF,
+		"@time=" ADVENTURE_TIME ";comet.chat/response=%s,foo,* :%s ENCAP %s ACK" CRLF,
 		remote->id, me.id, server->name);
 	is_client_sendq(expected, server, MSG);
 
 	/* no ACK if we don't match the mask */
-	client_util_parse(server, "@solanum.chat/response=" TEST_REMOTE_ID ",foo,badmask :" TEST_REMOTE_ID " TIME :" TEST_ME_ID);
+	client_util_parse(server, "@comet.chat/response=" TEST_REMOTE_ID ",foo,badmask :" TEST_REMOTE_ID " TIME :" TEST_ME_ID);
 	snprintf(expected, sizeof(expected),
-		"@time=" ADVENTURE_TIME ";solanum.chat/response=%s,foo,badmask :%s 391 %s %s :Friday July 14 2017 -- 02:40:00 +00:00" CRLF,
+		"@time=" ADVENTURE_TIME ";comet.chat/response=%s,foo,badmask :%s 391 %s %s :Friday July 14 2017 -- 02:40:00 +00:00" CRLF,
 		remote->id, me.id, remote->id, me.name);
 	is_client_sendq(expected, server, MSG);
 
 	/* invalid tags don't get passed (and also have no ACK) */
-	client_util_parse(server, "@solanum.chat/response=invalid,value :" TEST_REMOTE_ID " TIME :" TEST_ME_ID);
+	client_util_parse(server, "@comet.chat/response=invalid,value :" TEST_REMOTE_ID " TIME :" TEST_ME_ID);
 	snprintf(expected, sizeof(expected),
 		"@time=" ADVENTURE_TIME " :%s 391 %s %s :Friday July 14 2017 -- 02:40:00 +00:00" CRLF,
 		me.id, remote->id, me.name);
 	is_client_sendq(expected, server, MSG);
 
 	/* we still do an ACK if we get an ENCAP not destined for us */
-	client_util_parse(server, "@solanum.chat/response=" TEST_REMOTE_ID ",foo,* :" TEST_REMOTE_ID " ENCAP badmask FOO");
+	client_util_parse(server, "@comet.chat/response=" TEST_REMOTE_ID ",foo,* :" TEST_REMOTE_ID " ENCAP badmask FOO");
 	snprintf(expected, sizeof(expected),
-		"@time=" ADVENTURE_TIME ";solanum.chat/response=%s,foo,* :%s ENCAP %s ACK" CRLF,
+		"@time=" ADVENTURE_TIME ";comet.chat/response=%s,foo,* :%s ENCAP %s ACK" CRLF,
 		remote->id, me.id, server->name);
 	is_client_sendq(expected, server, MSG);
 

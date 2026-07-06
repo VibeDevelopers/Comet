@@ -1,5 +1,5 @@
 /*
- * oper-override for solanum.
+ * oper-override for comet.
  *
  * adds usermode +p and has a timer event that is iterated over to disable
  * usermode +p after a while...

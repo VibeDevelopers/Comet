@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * dnsbl.c: Manages DNSBL entries and lookups
  *
  * Copyright (C) 2006-2011 charybdis development team

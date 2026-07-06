@@ -1,5 +1,5 @@
 /*
- *  solanum: An advanced IRCd.
+ *  comet: An advanced IRCd.
  *  ircd_defs.h: A header for ircd global definitions.
  *
  *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center

@@ -14,7 +14,7 @@ Makefile
 .libs
 authd/authd
 bandb/bandb
-bandb/solanum-bantool
+bandb/comet-bantool
 autom4te.cache
 aclocal.m4
 compile
@@ -48,7 +48,7 @@ scripts/*.tar.bz2
 scripts/*.tar.gz
 include/setup.h
 include/setup.h.in
-ircd/solanum
+ircd/comet
 ircd/ircd_parser.c
 ircd/ircd_parser.h
 ircd/ircd_lexer.c
@@ -56,13 +56,13 @@ ircd/version.c
 ircd/version.c.last
 ssld/ssld
 testsuite/ircd.pid.*
-tools/solanum-mkpasswd
-tools/solanum-mkfingerprint
+tools/comet-mkpasswd
+tools/comet-mkfingerprint
 tools/genssl
 tools/mkpasswd
 tools/viconf
 include/serno.h
-ircd/solanum
+ircd/comet
 ircd/version.c
 ircd/version.c.last
 /libtool

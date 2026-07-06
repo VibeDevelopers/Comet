@@ -1,4 +1,4 @@
-project('solanum', 'c',
+project('comet', 'c',
   version: '1.0-dev',
   default_options: ['c_std=c99', 'warning_level=0'],
   meson_version: '>=0.62.0', # dependency('dl')

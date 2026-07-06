@@ -2,7 +2,7 @@
 
 set -eu
 
-echo "Extracting solanum/ircd/version.c..."
+echo "Extracting comet/ircd/version.c..."
 
 if test -r version.c.last
 then

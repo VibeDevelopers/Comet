@@ -1,5 +1,5 @@
 /*
- * Solanum: a slightly advanced ircd
+ * Comet: a slightly advanced ircd
  * m_ban.c: Propagates network bans across servers.
  *
  *  Copyright (C) 2010 Jilles Tjoelker
