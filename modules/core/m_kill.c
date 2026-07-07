@@ -93,7 +93,7 @@ mo_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		reason = s;
 	}
 	else
-		reason = "<No reason given>";
+		reason = "No reason given";
 
 	if((target_p = find_named_person(user)) == NULL)
 	{
@@ -157,7 +157,7 @@ mo_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		target_p->flags |= FLAGS_KILLED;
 	}
 
-	sprintf(buf, "Killed (%s (%s))", source_p->name, reason);
+	sprintf(buf, "Killed (%s)", reason);
 
 	exit_client(client_p, target_p, source_p, buf);
 }
@@ -173,7 +173,7 @@ ms_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	struct Client *target_p;
 	const char *user;
 	const char *reason;
-	char default_reason[] = "<No reason given>";
+	char default_reason[] = "No reason given";
 	const char *path;
 
 	*buf = '\0';
@@ -274,7 +274,7 @@ ms_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	/* FLAGS_KILLED prevents a quit being sent out */
 	target_p->flags |= FLAGS_KILLED;
 
-	sprintf(buf, "Killed (%s %s)", source_p->name, reason);
+	sprintf(buf, "Killed (%s)", reason);
 
 	exit_client(client_p, target_p, source_p, buf);
 }

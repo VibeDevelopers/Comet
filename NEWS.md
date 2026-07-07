@@ -80,6 +80,7 @@ bolded warnings in the full release notes below.
 - **Breaking:** WEBIRC now processes the "secure" option as specified by IRCv3. Web gateways that
   do not set this option will need to be updated or their connections will show as insecure.
 - Successfully changing IP with WEBIRC now drops an identd username
+- No longer notify public users the OPER that killed the user
 
 ### code
 - Channel lists are now kept sorted. A for-loop macro, `ITER_COMM_CHANNELS`, is introduced to
