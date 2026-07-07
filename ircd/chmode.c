@@ -797,18 +797,20 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 			return;
 		}
 
-		RB_DLINK_FOREACH(ptr, list->head)
-		{
-			char buf[BANLEN];
-			banptr = ptr->data;
-			if(banptr->forward)
-				snprintf(buf, sizeof(buf), "%s$%s", banptr->banstr, banptr->forward);
-			else
-				rb_strlcpy(buf, banptr->banstr, sizeof(buf));
+		if(!(chptr->mode.mode & MODE_HIDEBANS) || alevel & ONLY_CHANOPS) {
+			RB_DLINK_FOREACH(ptr, list->head)
+			{
+				char buf[BANLEN];
+				banptr = ptr->data;
+				if(banptr->forward)
+					snprintf(buf, sizeof(buf), "%s$%s", banptr->banstr, banptr->forward);
+				else
+					rb_strlcpy(buf, banptr->banstr, sizeof(buf));
 
-			sendto_one(source_p, rpl_list_p,
-				   me.name, source_p->name, chptr->chname,
-				   buf, banptr->who, banptr->when);
+				sendto_one(source_p, rpl_list_p,
+					   me.name, source_p->name, chptr->chname,
+					   buf, banptr->who, banptr->when);
+			}
 		}
 		sendto_one(source_p, rpl_endlist_p, me.name, source_p->name, chptr->chname);
 		return;

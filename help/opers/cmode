@@ -24,6 +24,8 @@ NO PARAMETERS:
               weakens +i control.
   ?  +u     - Unfiltered. Receive messages that would otherwise be filtered
               server side based on content.
+     +U     - Hidden ban/quiet list. Ban/quiet lists may only be seen
+              by chanops.
      +z     - Op moderated.  Messages blocked by +m, +b and +q are instead
               sent to ops.
      +L     - Large ban list.  Increase maximum number of +beIq entries.
