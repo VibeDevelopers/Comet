@@ -1,0 +1,108 @@
+#!/bin/sh
+# setup — configure, build, test, and install Comet without requiring root.
+#
+# Usage:
+#   ./setup [key=value ...]
+#   ./setup help
+#
+# Options are passed to meson setup as -Dkey=value.
+# If prefix= is not supplied, defaults to ~/ircd.
+# The build directory is always 'build'.
+
+set -e
+
+die() { echo "ERROR: $*" >&2; exit 1; }
+
+command -v meson >/dev/null 2>&1 || die "meson not found in PATH"
+
+BUILDDIR="build"
+
+if [ $# -eq 1 ] && [ "$1" = "help" ]; then
+    echo "Usage: ./setup [key=value ...]"
+    echo ""
+    echo "Available options (from meson_options.txt):"
+    echo ""
+    OPTFILE="$(dirname "$0")/meson_options.txt"
+    [ -f "$OPTFILE" ] || die "meson_options.txt not found"
+    awk '
+        { gsub(/\r/, ""); line = $0 }
+        /option\(/ {
+            block = line
+            next
+        }
+        block != "" {
+            block = block " " line
+        }
+        block != "" && /\)/ {
+            # name
+            s = block; sub(/.*option\('"'"'/, "", s); sub(/'"'"'.*/, "", s)
+            name = s
+
+            # description
+            s = block; sub(/.*description:[[:space:]]*'"'"'/, "", s); sub(/'"'"'.*/, "", s)
+            desc = s
+
+            # default value (string/boolean/feature)
+            defval = ""
+            s = block
+            if (match(s, /value:[[:space:]]*'"'"'[^'"'"']*'"'"'/)) {
+                v = substr(s, RSTART, RLENGTH)
+                sub(/value:[[:space:]]*'"'"'/, "", v); sub(/'"'"'.*/, "", v)
+                defval = v
+            } else if (match(s, /value:[[:space:]]*[0-9]+/)) {
+                v = substr(s, RSTART, RLENGTH)
+                sub(/value:[[:space:]]*/, "", v)
+                defval = v
+            } else if (match(s, /value:[[:space:]]*(true|false)/)) {
+                v = substr(s, RSTART, RLENGTH)
+                sub(/value:[[:space:]]*/, "", v)
+                defval = v
+            }
+
+            printf "  %-20s %s", name, desc
+            if (defval != "") printf " (default: %s)", defval
+            printf "\n"
+            block = ""
+            name = ""
+        }
+    ' "$OPTFILE"
+    echo ""
+    echo "Example: ./setup topiclen=390 nicklen=30 prefix=/opt/ircd"
+    exit 0
+fi
+
+has_prefix=0
+MESON_OPTS=""
+
+for arg in "$@"; do
+    case "$arg" in
+        prefix=*)  has_prefix=1; MESON_OPTS="$MESON_OPTS -D$arg" ;;
+        *=*)       MESON_OPTS="$MESON_OPTS -D$arg" ;;
+        *)         die "Unrecognised argument '$arg' (expected key=value)" ;;
+    esac
+done
+
+if [ "$has_prefix" -eq 0 ]; then
+    DEFAULT_PREFIX="$HOME/ircd"
+    echo "No prefix= given; defaulting to $DEFAULT_PREFIX"
+    MESON_OPTS="$MESON_OPTS -Dprefix=$DEFAULT_PREFIX"
+    mkdir -p "$DEFAULT_PREFIX"
+else
+    for arg in "$@"; do
+        case "$arg" in
+            prefix=*) mkdir -p "${arg#prefix=}" ;;
+        esac
+    done
+fi
+
+echo "==> meson setup $BUILDDIR $MESON_OPTS"
+meson setup "$BUILDDIR" --optimization 2 $MESON_OPTS
+
+echo "==> meson compile -C $BUILDDIR"
+meson compile -C "$BUILDDIR"
+
+echo "==> meson test -C $BUILDDIR"
+meson test -C "$BUILDDIR"
+
+echo "==> meson install -C $BUILDDIR"
+exec meson install -C "$BUILDDIR"
