@@ -1,4 +1,4 @@
-# comet ![Build Status](https://github.com/comet-ircd/comet/workflows/CI/badge.svg)
+# comet ![Build Status](https://github.com/VibeDevelopers/Comet/workflows/CI/badge.svg)
 
 Comet is an IRCv3 server designed to be highly scalable.  It implements IRCv3.1 and some parts of IRCv3.2.
 
@@ -67,7 +67,7 @@ See `meson configure build/` for build options.
 
 # tips
 
- * To report bugs in Comet, visit us at `#comet` on [Libera Chat](https://libera.chat)
+ * To report bugs in Comet, visit us at `#comet` on [VibeTalk](https://www.vibetalk.net)
 
  * Please read [doc/readme.txt](doc/readme.txt) to get an overview of the current documentation.
 
@@ -81,7 +81,7 @@ See `meson configure build/` for build options.
 # git access
 
  * The Comet git repository can be checked out using the following command:
-	`git clone https://github.com/comet-ircd/comet`
+	`git clone https://github.com/VibeDevelopers/Comet`
 
  * Comet's git repository can be browsed over the Internet at the following address:
-	https://github.com/comet-ircd/comet
+	https://github.com/VibeDevelopers/Comet
