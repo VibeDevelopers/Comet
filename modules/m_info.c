@@ -622,6 +622,11 @@ static struct InfoStruct info_table[] = {
 		INFO_INTBOOL_YN(&ConfigChannel.resv_forcepart),
 	},
 	{
+        	"cycle_host_change",
+		"Controls if when a users' host changes, they cycle channels",
+	        INFO_INTBOOL_YN(&ConfigChannel.cycle_host_change),
+	},
+	{
 		"opmod_send_statusmsg",
 		"Send messages to @#channel if affected by +z",
 		INFO_INTBOOL_YN(&ConfigChannel.opmod_send_statusmsg),

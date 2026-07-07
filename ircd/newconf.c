@@ -2821,6 +2821,7 @@ static struct ConfEntry conf_channel_table[] =
 	{ "autochanmodes",	CF_QSTRING, conf_set_channel_autochanmodes, 0, NULL	},
 	{ "displayed_usercount",	CF_INT, NULL, 0, &ConfigChannel.displayed_usercount	},
 	{ "strip_topic_colors",	CF_YESNO, NULL, 0, &ConfigChannel.strip_topic_colors	},
+	{ "cycle_host_change",  CF_YESNO, NULL, 0, &ConfigChannel.cycle_host_change },
 	{ "opmod_send_statusmsg", CF_YESNO, NULL, 0, &ConfigChannel.opmod_send_statusmsg	},
 	{ "ip_bans_through_vhost", CF_YESNO, NULL, 0, &ConfigChannel.ip_bans_through_vhost	},
 	{ "invite_notify_notice", CF_YESNO, NULL, 0, &ConfigChannel.invite_notify_notice	},
