@@ -809,6 +809,7 @@ set_default_conf(void)
 	ConfigChannel.cycle_host_change = false;
 	ConfigChannel.ip_bans_through_vhost = true;
 	ConfigChannel.invite_notify_notice = true;
+	ConfigChannel.autotopic = NULL;
 
 	ConfigChannel.autochanmodes = MODE_TOPICLIMIT | MODE_NOPRIVMSGS;
 
@@ -1590,6 +1591,8 @@ clear_out_old_conf(void)
 	ConfigFileEntry.fname_operspylog = NULL;
 	rb_free(ConfigFileEntry.fname_ioerrorlog);
 	ConfigFileEntry.fname_ioerrorlog = NULL;
+	rb_free(ConfigChannel.autotopic);
+	ConfigChannel.autotopic = NULL;
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, service_list.head)
 	{
