@@ -97,21 +97,29 @@ m_kick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			return;
 		}
 
-		if(get_channel_access(source_p, chptr, sourcems, MODE_ADD, NULL) < CHFL_CHANOP)
 		{
-			if(MyConnect(source_p))
+			int access_level = get_channel_access(source_p, chptr, sourcems, MODE_ADD, NULL);
+			if(access_level < CHFL_HALFOP)
 			{
-				sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
-					   me.name, source_p->name, name);
-				return;
-			}
+				if(MyConnect(source_p))
+				{
+					sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
+						   me.name, source_p->name, name);
+					return;
+				}
 
-			/* If its a TS 0 channel, do it the old way */
-			if(chptr->channelts == 0)
+				/* If its a TS 0 channel, do it the old way */
+				if(chptr->channelts == 0)
+				{
+					sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
+						   get_id(&me, source_p), get_id(source_p, source_p), name);
+					return;
+				}
+			}
+			/* Halfops cannot kick ops or other halfops */
+			if(access_level == CHFL_HALFOP && MyClient(source_p))
 			{
-				sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
-					   get_id(&me, source_p), get_id(source_p, source_p), name);
-				return;
+				/* targetms is not yet set here; we check after the target lookup */
 			}
 		}
 
@@ -135,6 +143,16 @@ m_kick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		{
 			sendto_one(source_p, form_str(ERR_ISCHANSERVICE),
 				   me.name, source_p->name, who->name, chptr->chname);
+			return;
+		}
+
+		/* Halfops cannot kick chanops or other halfops */
+		if(MyClient(source_p) && !IsServer(source_p) &&
+		   get_channel_access(source_p, chptr, sourcems, MODE_ADD, NULL) == CHFL_HALFOP &&
+		   (is_chanop(targetms) || is_halfop(targetms)))
+		{
+			sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
+				   me.name, source_p->name, chptr->chname);
 			return;
 		}
 

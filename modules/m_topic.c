@@ -112,7 +112,7 @@ m_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 			return;
 		}
 
-		if(MyClient(source_p) && !is_chanop_voiced(msptr) &&
+		if(MyClient(source_p) && !(msptr->flags & (CHFL_CHANOP | CHFL_HALFOP | CHFL_VOICE)) &&
 				!IsOperGeneral(source_p) &&
 				!add_channel_target(source_p, chptr))
 		{
@@ -122,7 +122,7 @@ m_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		}
 
 		if(((chptr->mode.mode & MODE_TOPICLIMIT) == 0 ||
-					get_channel_access(source_p, chptr, msptr, MODE_ADD, NULL) >= CHFL_CHANOP) &&
+					get_channel_access(source_p, chptr, msptr, MODE_ADD, NULL) >= CHFL_HALFOP) &&
 				(!MyClient(source_p) ||
 				 can_send(chptr, source_p, msptr)))
 		{

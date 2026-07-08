@@ -153,7 +153,8 @@ typedef int (*ExtbanFunc)(const char *data, struct Client *client_p,
 /* channel status flags */
 #define CHFL_PEON		0x0000	/* normal member of channel */
 #define CHFL_VOICE      	0x0001	/* the power to speak */
-#define CHFL_CHANOP	     	0x0002	/* Channel operator */
+#define CHFL_HALFOP		0x0002	/* Half operator */
+#define CHFL_CHANOP	     	0x0004	/* Channel operator */
 
 #define CHFL_BANNED		0x0008  /* cached as banned */
 #define CHFL_QUIETED		0x0010  /* cached as being +q victim */
@@ -161,11 +162,16 @@ typedef int (*ExtbanFunc)(const char *data, struct Client *client_p,
 #define ONLY_OPERS		0x0040
 #define ALL_MEMBERS		CHFL_PEON
 #define ONLY_CHANOPS		CHFL_CHANOP
+#define ONLY_HALFOPS		CHFL_HALFOP
+#define ONLY_CHANOPSHALFOPS	(CHFL_CHANOP|CHFL_HALFOP)
 #define ONLY_CHANOPSVOICED	(CHFL_CHANOP|CHFL_VOICE)
+#define ONLY_CHANOPSHALFOPSVOICED	(CHFL_CHANOP|CHFL_HALFOP|CHFL_VOICE)
 
 #define is_chanop(x)	((x) && (x)->flags & CHFL_CHANOP)
+#define is_halfop(x)	((x) && (x)->flags & CHFL_HALFOP)
 #define is_voiced(x)	((x) && (x)->flags & CHFL_VOICE)
 #define is_chanop_voiced(x) ((x) && (x)->flags & (CHFL_CHANOP|CHFL_VOICE))
+#define is_any_op(x)    ((x) && (x)->flags & (CHFL_CHANOP|CHFL_HALFOP))
 #define can_send_banned(x) ((x) && (x)->flags & (CHFL_BANNED|CHFL_QUIETED))
 
 /* channel modes ONLY */

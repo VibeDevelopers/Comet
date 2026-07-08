@@ -62,9 +62,9 @@ chm_regmsg_test(struct Client *source_p, struct Channel *chptr)
 	if (!EmptyString(source_p->user->suser))
 		return true;
 
-	/* voice and op override identification requirement, accept */
+	/* voice, halfop and op override identification requirement, accept */
 	msptr = find_channel_membership(chptr, source_p);
-	if (is_chanop_voiced(msptr))
+	if (msptr && msptr->flags & (CHFL_CHANOP | CHFL_HALFOP | CHFL_VOICE))
 		return true;
 
 	return false;

@@ -787,11 +787,16 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	{
 		fl = 0;
 
-		for (i = 0; i < 2; i++)
+		for (i = 0; i < 3; i++)
 		{
 			if(*s == '@')
 			{
 				fl |= CHFL_CHANOP;
+				s++;
+			}
+			else if(*s == '%')
+			{
+				fl |= CHFL_HALFOP;
 				s++;
 			}
 			else if(*s == '+')
@@ -824,6 +829,11 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 				*ptr_uid++ = '@';
 				len_uid++;
 			}
+			if(fl & CHFL_HALFOP)
+			{
+				*ptr_uid++ = '%';
+				len_uid++;
+			}
 			if(fl & CHFL_VOICE)
 			{
 				*ptr_uid++ = '+';
@@ -851,6 +861,25 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			*mbuf++ = 'o';
 			para[pargs++] = target_p->name;
 
+			/* a +oh user */
+			if(fl & CHFL_HALFOP)
+			{
+				if(pargs >= MAXMODEPARAMS)
+				{
+					*mbuf = '\0';
+					sendto_channel_local_tags(fakesource_p, ALL_MEMBERS, NULL, chptr,
+						batch_tag.value == NULL ? 0 : 1, &batch_tag, ":%s MODE %s %s %s %s %s %s",
+						fakesource_p->name, chptr->chname, modebuf,
+						para[0], para[1], para[2], para[3]);
+					mbuf = modebuf;
+					*mbuf++ = '+';
+					para[0] = para[1] = para[2] = para[3] = NULL;
+					pargs = 0;
+				}
+				*mbuf++ = 'h';
+				para[pargs++] = target_p->name;
+			}
+
 			/* a +ov user.. bleh */
 			if(fl & CHFL_VOICE)
 			{
@@ -870,6 +899,30 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 					pargs = 0;
 				}
 
+				*mbuf++ = 'v';
+				para[pargs++] = target_p->name;
+			}
+		}
+		else if(fl & CHFL_HALFOP)
+		{
+			*mbuf++ = 'h';
+			para[pargs++] = target_p->name;
+
+			/* a +hv user */
+			if(fl & CHFL_VOICE)
+			{
+				if(pargs >= MAXMODEPARAMS)
+				{
+					*mbuf = '\0';
+					sendto_channel_local_tags(fakesource_p, ALL_MEMBERS, NULL, chptr,
+						batch_tag.value == NULL ? 0 : 1, &batch_tag, ":%s MODE %s %s %s %s %s %s",
+						fakesource_p->name, chptr->chname, modebuf,
+						para[0], para[1], para[2], para[3]);
+					mbuf = modebuf;
+					*mbuf++ = '+';
+					para[0] = para[1] = para[2] = para[3] = NULL;
+					pargs = 0;
+				}
 				*mbuf++ = 'v';
 				para[pargs++] = target_p->name;
 			}
@@ -1207,6 +1260,28 @@ remove_our_modes(struct Channel *chptr, struct Client *source_p)
 			lpara[count++] = msptr->client_p->name;
 			*mbuf++ = 'o';
 
+			/* +oh, might not fit so check. */
+			if(is_halfop(msptr))
+			{
+				if(count >= MAXMODEPARAMS)
+				{
+					*mbuf = '\0';
+					sendto_channel_local(source_p, ALL_MEMBERS, chptr,
+							     ":%s MODE %s %s %s %s %s %s",
+							     source_p->name, chptr->chname,
+							     lmodebuf, lpara[0], lpara[1],
+							     lpara[2], lpara[3]);
+					mbuf = lmodebuf;
+					*mbuf++ = '-';
+					count = 0;
+					for(i = 0; i < MAXMODEPARAMS; i++)
+						lpara[i] = NULL;
+				}
+				msptr->flags &= ~CHFL_HALFOP;
+				lpara[count++] = msptr->client_p->name;
+				*mbuf++ = 'h';
+			}
+
 			/* +ov, might not fit so check. */
 			if(is_voiced(msptr))
 			{
@@ -1228,6 +1303,34 @@ remove_our_modes(struct Channel *chptr, struct Client *source_p)
 						lpara[i] = NULL;
 				}
 
+				msptr->flags &= ~CHFL_VOICE;
+				lpara[count++] = msptr->client_p->name;
+				*mbuf++ = 'v';
+			}
+		}
+		else if(is_halfop(msptr))
+		{
+			msptr->flags &= ~CHFL_HALFOP;
+			lpara[count++] = msptr->client_p->name;
+			*mbuf++ = 'h';
+
+			/* +hv */
+			if(is_voiced(msptr))
+			{
+				if(count >= MAXMODEPARAMS)
+				{
+					*mbuf = '\0';
+					sendto_channel_local(source_p, ALL_MEMBERS, chptr,
+							     ":%s MODE %s %s %s %s %s %s",
+							     source_p->name, chptr->chname,
+							     lmodebuf, lpara[0], lpara[1],
+							     lpara[2], lpara[3]);
+					mbuf = lmodebuf;
+					*mbuf++ = '-';
+					count = 0;
+					for(i = 0; i < MAXMODEPARAMS; i++)
+						lpara[i] = NULL;
+				}
 				msptr->flags &= ~CHFL_VOICE;
 				lpara[count++] = msptr->client_p->name;
 				*mbuf++ = 'v';
