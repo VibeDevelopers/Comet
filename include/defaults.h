@@ -30,7 +30,6 @@
  * Do not mess with these values unless you know what you are doing!
  */
 
-#include "setup.h"
 
 /* Below are the elements for default paths. */
 typedef enum {
