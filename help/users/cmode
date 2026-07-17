@@ -36,6 +36,7 @@ NO PARAMETERS:
               (however, new forwards can still be set subject to +F).
      +C     - Disable CTCP. All CTCP messages to the channel, except ACTION,
               are disallowed.
+  ?  +B     - Users marked as bots with user mode +B may not join.
   ?  +O     - IRC Operator only channel.
   ?  +A     - IRC server administrator only channel.
   ?  +T     - No NOTICEs allowed in the channel.

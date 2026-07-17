@@ -339,6 +339,7 @@ init_isupport(void)
 	add_isupport("MAXNICKLEN", isupport_intptr, &maxnicklen);
 	add_isupport("CHANNELLEN", isupport_intptr, &channellen);
 	add_isupport("TOPICLEN", isupport_intptr, &topiclen);
+	add_isupport("BOT", isupport_umode, "B");
 	add_isupport("DEAF", isupport_umode, "D");
 	add_isupport("TARGMAX", isupport_targmax, NULL);
 	add_isupport("EXTBAN", isupport_extban, NULL);
