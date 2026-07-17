@@ -20,6 +20,7 @@ User modes: (* designates that the umode is oper only)
        ? +u     - Receive messages that would otherwise be filtered server side
                   based on content.
          +w     - Can see oper and server wallops.
+         +W     - Receive a notice when someone does a WHOIS on you.
        ? +x     - Has a cloaked host. May be +h depending on cloaking module
        * +z     - Can see operwalls.
        ? +C     - Prevents you from receiving CTCPs other than ACTION.

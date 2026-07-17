@@ -86,7 +86,7 @@ int user_modes[256] = {
 	0,			/* T */
 	0,			/* U */
 	0,			/* V */
-	0,			/* W */
+	UMODE_WHOISNOTICE,	/* W */
 	0,			/* X */
 	0,			/* Y */
 	UMODE_SECURE,		/* Z */

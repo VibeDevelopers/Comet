@@ -120,6 +120,16 @@ Opers with ``+w`` additionally receive ``WALLOPS`` sent by servers (e.g. remote
 ``CONNECT``, remote ``SQUIT``, various severe misconfigurations, many services
 packages).
 
+``+W``, receive WHOIS notices
+-----------------------------
+
+.. note:: This is a user umode, which anybody can set. It is not
+          specific to operators.
+
+Users with the ``+W`` umode set will receive a server notice whenever another
+user performs a ``WHOIS`` on them, including WHOIS requests made from remote
+servers.
+
 ``+z``, receive operwall
 ------------------------
 

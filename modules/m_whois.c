@@ -49,6 +49,7 @@ static const char whois_desc[] =
 
 static void do_whois(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static void single_whois(struct Client *source_p, struct Client *target_p, int operspy);
+static void notify_whois(struct Client *source_p, struct Client *target_p);
 
 static void m_whois(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static void ms_whois(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
@@ -226,6 +227,17 @@ do_whois(struct Client *client_p, struct Client *source_p, int parc, const char 
  * 		  writing results to source_p
  */
 static void
+notify_whois(struct Client *source_p, struct Client *target_p)
+{
+	if(source_p == target_p || !IsPerson(source_p) || !IsPerson(target_p) ||
+			!IsWhoisNotice(target_p))
+		return;
+
+	sendto_one_notice(target_p, ":*** %s (%s@%s) did a WHOIS on you",
+			source_p->name, source_p->username, source_p->host);
+}
+
+static void
 single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 {
 	char buf[BUFSIZE];
@@ -237,6 +249,8 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 		s_assert(0);
 		return;
 	}
+
+	notify_whois(source_p, target_p);
 
 	sendto_one_numeric(source_p, RPL_WHOISUSER, form_str(RPL_WHOISUSER),
 			   target_p->name, target_p->username,
