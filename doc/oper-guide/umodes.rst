@@ -8,6 +8,14 @@ This vanity usermode is used to denote a server administrator in WHOIS
 output. All local “admin” privileges are independent of it, though
 services packages may grant extra privileges to ``+a`` users.
 
+``+B``, bot
+------------
+
+.. note:: This is a user umode, which anybody can set. It is not
+          specific to operators.
+
+This umode marks the user as a bot. It is shown in ``WHOIS`` output.
+
 ``+D``, deaf
 ------------
 

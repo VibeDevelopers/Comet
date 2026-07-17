@@ -320,6 +320,7 @@ struct mode_table
 
 /* *INDENT-OFF* */
 static struct mode_table umode_table[] = {
+	{"bot",         UMODE_BOT       },
 	{"deaf",	UMODE_DEAF	},
 	{"invisible",	UMODE_INVISIBLE	},
 	{"noforward",	UMODE_NOFORWARD	},

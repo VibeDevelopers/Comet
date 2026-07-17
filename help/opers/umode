@@ -6,6 +6,7 @@ User modes: (* designates that the umode is oper only)
 
      USERMODE     DESCRIPTION
 -----------------------------------------------------------------
+	 +B     - Designates this client is a bot.
        * +a     - Is marked as a server admin in whois.
          +g     - Deny users not on your /ACCEPT list from messaging you and
                   inviting you to channels.

@@ -5,6 +5,7 @@ User modes: (? designates that the umode is provided by an extension
 
      USERMODE     DESCRIPTION
 -----------------------------------------------------------------
+	 +B     - Designates this client is a bot.
          +o     - Designates this client is an IRC Operator.
                   Use the /oper command to attain this.
          +i     - Designates this client 'invisible'.
