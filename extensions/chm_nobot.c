@@ -72,7 +72,7 @@ h_can_join(void *data_)
 
 	if((chptr->mode.mode & mymode) && IsBot(source_p))
 	{
-		sendto_one_numeric(source_p, 474, "%s :Cannot join channel (+B) - bots are not permitted", chptr->chname);
+		sendto_one_numeric(source_p, 520, "%s :Cannot join channel (+B) - bots are not permitted", chptr->chname);
 		data->approved = ERR_CUSTOM;
 	}
 }
