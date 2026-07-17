@@ -163,6 +163,14 @@ Users can still knock on the channel or change their nick.
 ``+n``, no external messages
 ----------------------------
 
+``+X``, bot only
+----------------
+
+.. note:: This channel mode is only available if the ``chm_botonly.so``
+          extension is loaded.
+
+When set, only users with user mode ``+B`` (bots) may join the channel.
+
 When set, this mode prevents users from sending to the channel without
 being in it themselves. This is recommended.
 

@@ -46,6 +46,7 @@ NO PARAMETERS:
   ?  +T     - No NOTICEs allowed in the channel.
   ?  +S     - Only users connected via SSL/TLS may join the channel while this 
               mode is set. Users already in the channel are not affected.
+  ?  +X     - Only users with user mode +B (bots) may join the channel.
 
 WITH PARAMETERS:
      +f     - Forward.  Forwards users who cannot join because of +i,

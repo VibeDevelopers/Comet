@@ -6,6 +6,7 @@ extension_modules = [
   'chm_operonly',
   'chm_insecure',
   'chm_nonotice',
+  'chm_botonly',
   'chm_nobot',
   'chm_operpeace',
   'chm_regmsg',

@@ -13,6 +13,7 @@ extension_LTLIBRARIES =		\
   chm_operonly.la		\
   chm_insecure.la		\
   chm_nonotice.la		\
+  chm_botonly.la		\
   chm_nobot.la			\
   chm_operpeace.la		\
   chm_regmsg.la			\
