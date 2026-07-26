@@ -1432,6 +1432,7 @@ user_welcome(struct Client *source_p)
 
 	show_isupport(source_p);
 
+	call_hook(h_user_welcome, source_p);
 	show_lusers(source_p);
 
 	if(ConfigFileEntry.short_motd)
