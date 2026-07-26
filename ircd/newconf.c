@@ -92,7 +92,7 @@ conf_strtype(int type)
 }
 
 int
-add_top_conf(const char *name, int (*sfunc) (struct TopConf *),
+add_top_conf(const char *name, int (*sfunc) (struct TopConf *, const char *),
 		int (*efunc) (struct TopConf *), struct ConfEntry *items)
 {
 	struct TopConf *tc;
@@ -544,7 +544,7 @@ conf_set_privset_privs(void *data)
 }
 
 static int
-conf_begin_oper(struct TopConf *tc)
+conf_begin_oper(struct TopConf *tc, const char *name)
 {
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
@@ -773,7 +773,7 @@ conf_set_oper_snomask(void *data)
 }
 
 static int
-conf_begin_class(struct TopConf *tc)
+conf_begin_class(struct TopConf *tc, const char *name)
 {
 	if(yy_class)
 		free_class(yy_class);
@@ -883,7 +883,7 @@ conf_set_class_sendq(void *data)
 static char *listener_address[2];
 
 static int
-conf_begin_listen(struct TopConf *tc)
+conf_begin_listen(struct TopConf *tc, const char *name)
 {
 	for (int i = 0; i < ARRAY_SIZE(listener_address); i++) {
 		rb_free(listener_address[i]);
@@ -984,7 +984,7 @@ conf_set_listen_address(void *data)
 }
 
 static int
-conf_begin_auth(struct TopConf *tc)
+conf_begin_auth(struct TopConf *tc, const char *name)
 {
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
@@ -1237,7 +1237,7 @@ conf_set_auth_umodes(void *data)
 }
 
 static int
-conf_begin_connect(struct TopConf *tc)
+conf_begin_connect(struct TopConf *tc, const char *name)
 {
 	if(yy_server)
 		free_server_conf(yy_server);
@@ -1246,8 +1246,8 @@ conf_begin_connect(struct TopConf *tc)
 	yy_server->port = PORTNUM;
 	yy_server->flags |= SERVER_TB;
 
-	if(conf_cur_block_name != NULL)
-		yy_server->name = rb_strdup(conf_cur_block_name);
+	if(name != NULL)
+		yy_server->name = rb_strdup(name);
 
 	return 0;
 }
@@ -1498,6 +1498,26 @@ conf_set_secure_ip(void *data)
 	yy_tmp->host = rb_strdup(data);
 	yy_tmp->status = CONF_SECURE;
 	add_conf_by_address(yy_tmp->host, CONF_SECURE, NULL, NULL, yy_tmp);
+}
+
+static int
+conf_start_cluster(struct TopConf *tc, const char *name)
+{
+	rb_dlink_node *ptr, *next_ptr;
+
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_cluster_list.head)
+	{
+		free_remote_conf(ptr->data);
+		rb_dlinkDestroy(ptr, &yy_cluster_list);
+	}
+
+	if(yy_shared != NULL)
+	{
+		free_remote_conf(yy_shared);
+		yy_shared = NULL;
+	}
+
+	return 0;
 }
 
 static int
@@ -1770,12 +1790,12 @@ conf_set_service_name(void *data)
 }
 
 static int
-conf_begin_alias(struct TopConf *tc)
+conf_begin_alias(struct TopConf *tc, const char *name)
 {
 	yy_alias = rb_malloc(sizeof(struct alias_entry));
 
-	if (conf_cur_block_name != NULL)
-		yy_alias->name = rb_strdup(conf_cur_block_name);
+	if (name != NULL)
+		yy_alias->name = rb_strdup(name);
 
 	yy_alias->flags = 0;
 
@@ -1894,7 +1914,7 @@ static void conf_set_dnsbl_entry_reason(void *data);
 #define IPTYPE_IPV6 2
 
 static int
-conf_warn_blacklist_deprecation(struct TopConf *tc)
+conf_warn_blacklist_deprecation(struct TopConf *tc, const char *name)
 {
 	conf_report_error("blacklist{} blocks have been deprecated -- use dnsbl{} blocks instead.");
 	return 0;
@@ -2082,7 +2102,7 @@ struct opm_scanner
 };
 
 static int
-conf_begin_opm(struct TopConf *tc)
+conf_begin_opm(struct TopConf *tc, const char *name)
 {
 	yy_opm_address_ipv4 = yy_opm_address_ipv6 = NULL;
 	yy_opm_port_ipv4 = yy_opm_port_ipv6 = yy_opm_timeout = 0;
@@ -2416,7 +2436,7 @@ conf_start_block(char *block, char *name)
 		conf_cur_block_name = NULL;
 
 	if(conf_cur_block->tc_sfunc)
-		if(conf_cur_block->tc_sfunc(conf_cur_block) < 0)
+		if(conf_cur_block->tc_sfunc(conf_cur_block, conf_cur_block_name) < 0)
 			return -1;
 
 	return 0;
@@ -2889,7 +2909,7 @@ newconf_init()
 	add_top_conf("secure", NULL, NULL, NULL);
 	add_conf_item("secure", "ip", CF_QSTRING, conf_set_secure_ip);
 
-	add_top_conf("cluster", conf_cleanup_cluster, conf_cleanup_cluster, NULL);
+	add_top_conf("cluster", conf_start_cluster, conf_cleanup_cluster, NULL);
 	add_conf_item("cluster", "name", CF_QSTRING, conf_set_cluster_name);
 	add_conf_item("cluster", "flags", CF_STRING | CF_FLIST, conf_set_cluster_flags);
 
