@@ -275,7 +275,7 @@ add_user_to_channel(struct Channel *chptr, struct Client *client_p, int flags)
 
 	rb_dlinkAdd(msptr, &msptr->channode, &chptr->members);
 
-	if(MyClient(client_p))
+	if (MyClient(client_p))
 		rb_dlinkAdd(msptr, &msptr->locchannode, &chptr->locmembers);
 
         /* Set autotopic only when a local client is the first member and the
@@ -285,7 +285,7 @@ add_user_to_channel(struct Channel *chptr, struct Client *client_p, int flags)
 	 * exists.  topic_time == channelts ensures the value is deterministic
 	 * and identical on every server that creates the same channel, so a
 	 * subsequent burst topic with an equal or older TS wins cleanly. */
-	if(MyClient(client_p) && chptr->topic == NULL && !EmptyString(ConfigChannel.autotopic))
+	if (MyClient(client_p) && chptr->topic == NULL && !EmptyString(ConfigChannel.autotopic))
 		set_channel_topic(chptr, ConfigChannel.autotopic, me.name, chptr->channelts);
 }
 
