@@ -75,3 +75,21 @@ jobs:
       run: meson compile -C build/
     - name: meson test
       run: meson test -C build/
+
+  notify-irc:
+    name: Send IRC notifications
+    runs-on: ubuntu-24.04
+    needs: linux-meson
+    # always() so we still notify on failure; push only, so PRs from forks don't try to notify
+    if: ${{ always() && github.event_name == 'push' }}
+    steps:
+    - name: Notify IRC
+      uses: rectalogic/notify-irc@v2
+      with:
+        server: irc.grom.xin
+        port: 6697
+        tls: true
+        channel: "#dev"
+        nickname: Comet
+        message: |
+          ${{ github.actor }} pushed to ${{ github.ref_name }}: ${{ needs.linux-meson.result }} - ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
