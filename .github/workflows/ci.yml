@@ -15,6 +15,7 @@ on:
   pull_request:
     branches:
       - main
+      - dev
     paths-ignore:
       - '.github/workflows/docs.yaml'
       - 'doc/oper-guide/**'
@@ -23,6 +24,7 @@ on:
       - 'NEWS.md'
       - 'README.md'
 
+jobs:
   linux-meson:
     name: Linux (meson)
     runs-on: ${{ matrix.os }}
