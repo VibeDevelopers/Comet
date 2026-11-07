@@ -83,6 +83,16 @@ jobs:
     # always() so we still notify on failure; push only, so PRs from forks don't try to notify
     if: ${{ always() && github.event_name == 'push' }}
     steps:
+    - name: Get commit title
+      id: commit
+      env:
+        COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+      run: |
+        # First line only, strip CRs, cap length
+        title=$(printf '%s' "$COMMIT_MESSAGE" | head -n1 | tr -d '\r' | cut -c1-72)
+        echo "title=${title:-(no commit message)}" >> "$GITHUB_OUTPUT"
+        echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
     - name: Notify IRC
       uses: rectalogic/notify-irc@v2
       with:
@@ -91,5 +101,8 @@ jobs:
         tls: true
         channel: "#dev"
         nickname: Comet
-        message: |
-          ${{ github.actor }} pushed to ${{ github.ref_name }}: ${{ needs.linux-meson.result }} - ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+        message: >-
+          [${{ needs.linux-meson.result }}]
+          ${{ github.actor }}/${{ github.ref_name }}:
+          ${{ steps.commit.outputs.title }} -
+          ${{ github.server_url }}/${{ github.repository }}/commit/${{ steps.commit.outputs.short_sha }}
